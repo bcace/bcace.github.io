@@ -27,17 +27,43 @@ Results of these tests would not be useful to anyone else if I assumed a certain
 * Agent can have length in any dimension (don't have to be points).
 * Agent can be removed from or added to a simulation.
 
-## Implemented structures
+## Interaction
 
-### CPU simple
+(Seer, seen)
 
-### CPU tree
+## Space partitioning structures
 
-### CPU grid
+Space that these structures partition doesn't have to be actual space, the four available dimensions can represent anything; that's why, when e.g. saying that an interaction only works within a certain range, we have to specify the range for each of the used 1, 2, 3 or 4 dimensions.
 
-### GPU simple
+Generally with space partitioning structures it seems that there's often an optimal depth to which we partition the space. If we partition the space too little we get too many agents to reject during the narrow phase (distance test), and if we partition too much we get more partitions to build, traverse and test for closeness.
 
-### GPU tree
+For this reason there are two parameters that can be adjusted for all partitioning structures. First is a set of sizes, one for each dimension, that represent the suggested smallest partition size for each dimension. They are just "suggested" because we can have multiple interactions in a model, each with its own interaction radii, and the smallest partition sizes should be related to those interaction radii. Then there is a parameter called "depth_correction" that can then be varied to adjust the smallest partition sizes as follows:
+
+```
+size = suggested_size / 2^depth_correction
+```
+
+Also note that unlike most other implementations of grids and trees for this kind of purpose, because we can have multiple interactions with drastically different interaction radii, we cannot assume that to find all agents that are within interaction range we can just consider a partition's immediate neighboring partitions. Generally, as mentioned above, interaction radii are used just as an initial, approximate value for a good partition size.
+
+Currently all partitioning structures are completely rebuilt at the start of each step since profiling shows that it takes very little time compared to actual agent interactions.
+
+### CPU
+
+#### Simple
+
+Simple is a "non-structure" used either when *all* agents have to interact, or just as a reference to measure the effectiveness of other, more elaborate structures. It just distributes agents evenly between threads, and of course we have to test each agent pair for distance and throw away pairs that are too far apart.
+
+#### Tree
+
+Tree structure is an unbalanced k-d tree; a binary tree where a partition is split in half along a dimension with largest ratio between partition size in that dimension and smallest partition size in the same dimension. Neighboring partitions are found by traversing the tree and testing partitions' bounding boxes for overlap. (Threading)
+
+#### Grid
+
+### GPU
+
+#### Simple
+
+#### Tree
 
 ## Tests
 
