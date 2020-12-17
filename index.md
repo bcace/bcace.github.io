@@ -1,1 +1,1 @@
-## [Tay](tay.md)
+## [Efficient complex system simulation](tay.md)

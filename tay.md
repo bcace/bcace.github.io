@@ -16,6 +16,8 @@ If agent interaction depends on distance between moving agents then we have an a
 
 Additionally, we have to be able to use this space partitioning structure from multiple threads in a balanced way.
 
+## Tay
+
 To explore how different models and optimization methods interact I wrote [Tay](https://github.com/bcace/tay). The goal is to have multiple different test models and simulate them with different space partitioning structures, on different numbers of threads and both on CPU and GPU, and compare run-times. Since during a single simulation agent properties, behavior and distribution in space could change so much that it completely changes which structure is optimal, Tay allows switching between structures during simulation (even between CPU and GPU), changing the number of threads (on CPU) and adjusting any parameters each structure might have.
 
 Results of these tests would not be useful to anyone else if I assumed a certain type of agent-based models, a certain type of agents or a certain method of communication between them; so Tay should already implement or at least not preclude any of the following features from being added.
@@ -27,9 +29,37 @@ Results of these tests would not be useful to anyone else if I assumed a certain
 * Agent can have length in any dimension (don't have to be points).
 * Agent can be removed from or added to a simulation.
 
-## Interaction
+## Assigning agent behavior
 
-(Seer, seen)
+To avoid race conditions agent behavior code is split into *passes*. There are currently only two types of passes: **act** and **see**. **act** pass describes what each agent does on its own, and **see** pass describes how two agents interact where one agent *sees* the other one. This strict role assignment for the two agents as **seer** and **seen** in **see** passes is what enables lock-free parallelism: knowing which of the two agents can change its state (**seer**) and which one is read-only (**seen**) enables scheduling **see** code execution so that a **seer** agent is never in more than one thread during a **see** pass.
+
+So if we only want to describe a particle system where agents are particles that don't interact, we would only have one **act** pass. ... a C function that would look something like this:
+
+> NOTE: The following simplified examples are written as pseudo code, similar to OpenCL C, in current Tay implementation I write C code with some decorations that a preprocessing script turns into regular C which I pass as function pointers to the simulation for CPU execution, and OpenCL C which I pass to the OpenCl API as string for GPU execution.
+
+```C
+void act(MyAgentType *agent, void *pass_context) {
+    agent->position.x += 1; /* these agents move along the x axis by 1 each simulation step */
+}
+```
+
+If we wanted to have a simple interaction where agents bounced off each other:
+
+```C
+void see(MyAgentType *seer_agent, MyAgentType *seen_agent, MySeePassSettings *see_settings) {
+    float4 d = seer_agent->position - seen_agent->position; /* distance between two agents */
+    if (length(d) < see_settings->r) {  /* if the two agents are close enough */
+        float4 f = d * see_settings->c; /* calculate force using the spring constant */
+        seer_agent->f -= f; /* seer agent gets pushed away from seen agent */
+        seen_agent->f += f; /* seen agent gets pushed away from seer agent */
+    }
+}
+
+void act(MyAgentType *agent, void *pass_context) {
+    agent->position += seer_agent->f; /* move agent in the direction of the force */
+    seer_agent->f = 0; /* clear the force so in the next simulation step agent can accumulate new resulting force */
+}
+```
 
 ## Space partitioning structures
 
