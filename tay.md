@@ -35,7 +35,7 @@ To avoid race conditions agent behavior code is split into *passes*. There are c
 
 So if we only want to describe a particle system where agents are particles that don't interact, we would only have one **act** pass. ... a C function that would look something like this:
 
-> NOTE: The following simplified examples are written as pseudo code, similar to OpenCL C, in current Tay implementation I write C code with some decorations that a preprocessing script turns into regular C which I pass as function pointers to the simulation for CPU execution, and OpenCL C which I pass to the OpenCl API as string for GPU execution.
+> NOTE: Following simplified examples are written as pseudo code, similar to OpenCL C, in current Tay implementation I write C code with some decorations that a preprocessing script turns into regular C which I pass as function pointers to the simulation for CPU execution, and OpenCL C which I pass to the OpenCl API as string for GPU execution.
 
 ```C
 void act(MyAgentType *agent, void *pass_context) {
