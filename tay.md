@@ -1,33 +1,31 @@
 
-## Efficient complex system simulation
+## Efficient agent-based system simulation
 
-A number of years ago I was working on an agent-based modeling and simulation tool ([Ochre](https://github.com/bcace/ochre) is the most recent one of four complete rewrites) and at the time I focused mostly on how to achieve immediate connection between changes in model code and simulation, and creating a language in which non-programmers could write parallel programs without having to worry about writing lock-free and race-condition-free parallel code.
+A number of years ago I was working on [Ochre](https://github.com/bcace/ochre) - agent-based modeling and simulation tool, and I focused mostly on achieving immediate connection between model modification and simulation, and creating a language in which non-programmers could safely write parallel agent interaction code without fear of data races or race conditions. While simulation performance was decent, at a certain scale simulations would slow down enough to break the immediacy of model development, and it was obvious that there isn't a single "best" mechanism to facilitate efficient simulation for all the different models that users might want to develop. Even in the simplest case if we assume that all agents are points, and all their interactions depend on distances between them, we can still use completely different optimizations, depending just on whether agent distribution is dense or sparse, and whether agents are static or moving.
 
-While simulation performance was comparable to or better than similar tools at the time, at certain scale simulations would slow down enough to break the immediacy of model development. And the main worry was that I could never come up with a good [space partitioning](https://en.wikipedia.org/wiki/Space_partitioning) scheme that could be used in a parallel way and would fit all the different models, with their different types of agents, behaviors and interaction mechanisms.
+Generally the biggest slowdown in agent-based simulations comes from agent interactions. If it is known in advance which agents will interact (connections between agents, direct references to other agents, or when *all* agents have to interact) then the only thing to do is parallelize the execution of those interactions. If the decision whether agents should interact is made based on their proximity ([flocking](https://en.wikipedia.org/wiki/Flocking_(behavior)) is a good example) then there's potential for optimization by using [space partitioning structures](https://en.wikipedia.org/wiki/Space_partitioning). These structures provide rough information on which groups of agents are so far apart that they have no chance of interacting (broad phase). Then we're left with groups of agents which *might* interact, and we have to filter out agent pairs that are too far apart (narrow phase).
 
-Agent-based (or generally [Complex system](https://en.wikipedia.org/wiki/Complex_system)) simulations are relatively common: academic agent-based simulations, CGI for movies, games and art. Executing all these simulations at large scale is always problematic, and the most significant contribution to simulation run-times comes from the number of interactions between agents.
-In simulations where number of interactions is predictable and relatively constant (each agent interacts with all other agents, or they interact with a relatively fixed subset of other agents, identified through references or connections) we only have to parallelize the execution and make sure that workload is balanced between threads.
+> Example: if there are 1000 agents and they all have to interact, that's 999000 interactions at each step. If we now want to limit agents to only interact if they're close enough to each other, and it happens that for a certain range, on average, agents interact with 10 agents at each step, that's 10000 actual interactions. But in order to test whether agents should interact at all we still had to go through all 999000 pairs, which means we just wasted time on 989000 tests. We use pace partitioning structures to reduce this number of agent pairs we have to test.
 
-If agent interaction depends on distance between moving agents then we have an additional job to cull as many "impossible" interactions as quickly as possible. This is usually done by organizing agents into [space partitioning structures](https://en.wikipedia.org/wiki/Space_partitioning) that give us rough information on which groups of agents are so far apart that they have no chance of interacting (broad phase). Then we're left with groups of agents which *might* interact, and we have to filter out agent pairs that are too far apart (narrow phase). At that point optimizing the chosen structure comes down to:
+At that point optimizing the chosen structure generally means:
 
 * minimizing the number of agent pairs that pass the broad phase and get rejected in the narrow phase,
 * minimizing time required to build/maintain the structure,
-* minimizing time required to traverse the structure and find neighboring partitions.
-
-Additionally, we have to be able to use this space partitioning structure from multiple threads in a balanced way.
+* minimizing time required to traverse the structure and find neighboring partitions,
+* parallelizing both building and using the structure.
 
 ## Tay
 
-To explore how different models and optimization methods interact I wrote [Tay](https://github.com/bcace/tay). The goal is to have multiple different test models and simulate them with different space partitioning structures, on different numbers of threads and both on CPU and GPU, and compare run-times. Since during a single simulation agent properties, behavior and distribution in space could change so much that it completely changes which structure is optimal, Tay allows switching between structures during simulation (even between CPU and GPU), changing the number of threads (on CPU) and adjusting any parameters each structure might have.
+To help explore how different models and optimization methods interact I wrote [Tay](https://github.com/bcace/tay). The goal is to have multiple different test models and simulate them with different space partitioning structures, on different numbers of threads and both on CPU and GPU, and compare run-times. Since during a single simulation agent properties, behavior and distribution in space could change so much that it completely changes which structure is optimal, Tay allows switching between structures during simulation (even between CPU and GPU), changing the number of threads (on CPU) and adjusting any parameters each structure might have.
 
-Results of these tests would not be useful to anyone else if I assumed a certain type of agent-based models, a certain type of agents or a certain method of communication between them; so Tay should already implement or at least not preclude any of the following features from being added.
+As mentioned above, results of this work should be applicable to a wide variety of agent-based models, so Tay already accomodates following requirements (at least does not preclude ... from being added):
 
-* Communication methods can be combined: communicating with neighbors, through direct references, connection objects or a grid [particle mesh method](https://en.wikipedia.org/wiki/Particle_Mesh).
-* Space doesn't have fixed boundaries.
-* Number of space dimensions is flexible (currently 1 - 4).
-* There can be multiple agent types with multiple different interactions defined between them, each with its own set of interaction distances.
-* Agent can have length in any dimension (don't have to be points).
-* Agent can be removed from or added to a simulation.
+* communication methods can be combined: communicating with neighbors, through direct references, connection objects or a grid [particle mesh method](https://en.wikipedia.org/wiki/Particle_Mesh),
+* space doesn't have fixed boundaries,
+* number of space dimensions is flexible (currently 1 - 4),
+* there can be multiple agent types with multiple different interactions defined between them, each with its own set of interaction distances,
+* agent can have length in any dimension (don't have to be points),
+* agent can be removed from or added to a simulation.
 
 ## Assigning agent behavior
 
@@ -85,7 +83,7 @@ Simple is a "non-structure" used either when *all* agents have to interact, or j
 
 #### Tree
 
-Tree structure is an unbalanced k-d tree; a binary tree where a partition is split in half along a dimension with largest ratio between partition size in that dimension and smallest partition size in the same dimension. Neighboring partitions are found by traversing the tree and testing partitions' bounding boxes for overlap. (Threading)
+Tree structure is a k-d tree; a binary tree where a partition is split in half along a dimension with largest ratio between partition size in that dimension and smallest partition size in the same dimension. Neighboring partitions are found by traversing the tree and testing partitions' bounding boxes for overlap. (Threading)
 
 #### Grid
 
@@ -98,3 +96,5 @@ Tree structure is an unbalanced k-d tree; a binary tree where a partition is spl
 ## Tests
 
 All structures are tested and results are compared to make sure there are no race conditions (other than small errors caused by some floating point operations not being commutative) regardless of agent organization, number of execution threads or hardware used. Just to make sure structure implementations are completely independent there is a mode of execution where all structures are used, each one for a single step of the simulation.
+
+(i5-8250U)

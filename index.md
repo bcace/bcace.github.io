@@ -1,3 +1,3 @@
 # Branimir Čače
 
-## [Efficient complex system simulation](tay.md)
+## [Efficient agent-based system simulation](tay.md)
