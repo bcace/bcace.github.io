@@ -48,18 +48,16 @@ Communication methods can be combined: communicating with neighbors within speci
 
 ##### Adding/removing agents
 
-Agents can be removed from or added to a running simulation. If number of agents varies in a simulation then there are roughly two ways to iterate efficiently through "live" agents:
+Agents can be removed from or added to a running simulation. This requires certain provisions in the space partitioning structures, depending on the model itself and the chosen method for efficiently iterating through agents. The options are roughly:
 
-1. connect agents in a linked list,
-2. mark "dead" agents and skip them (with an occasional "defragmentation" step),
-
-both of which require extensive provisions in the space partitioning structure. Option 1. requires embedding "next" pointers into agents themselves, and in option 2. the "defragmentation" step where agents would be moved in memory would require all references to agents from connection objects or other agents be updated as well. This makes option 2. either more complicated (and potentially lose any performance gains over option 1.) or limited only to use in models where there are no agent references.
+1. **Connecting agents into linked lists** requires embedding `next` pointers into agents themselves, and the same pointers can be used to group agents into partitions.
+2. **Marking "dead" agents** and skipping them, with an occasional "defragmentation" step. The "defragmentation" step where agents would be moved in memory would require that all references to agents from connection objects or other agents are updated as well. This makes this option either more complicated (and potentially lose any performance gains over option 1.) or limited only to use in models where there are no agent references.
 
 ## Space partitioning structures
 
 Generally with space partitioning structures it seems that there's often an optimal depth to which we partition the space. If we partition the space too little we get too many agents to reject during the narrow phase (distance test), and if we partition too much we get more partitions to build, traverse and test for closeness.
 
-For this reason there are two parameters that can be adjusted for all partitioning structures. First is a set of sizes, one for each dimension, that represent the suggested smallest partition size for each dimension. They are just "suggested" because we can have multiple interactions in a model, each with its own interaction radii, and the smallest partition sizes should be related to those interaction radii. The other is a parameter called "depth_correction" that can then be varied to adjust the smallest partition sizes as `size = suggested_size / 2^depth_correction`.
+For this reason there are two parameters that can be adjusted for all partitioning structures. First is a set of sizes, one for each dimension, that represent the suggested smallest partition size for each dimension. They are just "suggested" because we can have multiple interactions in a model, each with its own interaction radii, and the smallest partition sizes should be related to those interaction radii. The other is a parameter called `depth_correction` that can then be varied to adjust the smallest partition sizes as `size = suggested_size / 2^depth_correction`.
 
 Also note that unlike most other implementations of grids and trees for this kind of purpose, because we can have multiple interactions with drastically different interaction radii, we cannot assume that to find all agents that are within interaction range we can just consider a partition's immediate neighboring partitions. Generally, as mentioned above, interaction radii are used just as an initial, approximate value for a good partition size.
 
