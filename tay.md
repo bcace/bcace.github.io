@@ -16,15 +16,15 @@ At that point optimizing the chosen structure generally means:
 
 ## Tay
 
-[Tay](https://github.com/bcace/tay) is a collection of space partitioning structures created to explore how they perform on different models. The goal is to have multiple different test models and run simulations with different structures, on different numbers of threads and both on CPU and GPU, and compare run-times. Since agent properties, behavior and distribution in space can change during a single simulation run so much that it completely changes which structure is optimal, Tay allows switching between structures during a simulation run (even switching between CPU and GPU), changing the number of threads (on CPU) and adjusting any parameters each structure might have. Also, as the conclusions derived from these experiments should be applicable to a wide variety of agent-based models, the following requirements should be met:
+[Tay](https://github.com/bcace/tay) is a collection of space partitioning structures created to explore how they perform on different models. The goal is to have multiple different test models and run simulations with different structures, on different numbers of threads and both on CPU and GPU, and compare run-times. Since agent properties, behavior and distribution in space can change during a single simulation run so much that it completely changes which structure is optimal, Tay allows switching between structures during a simulation run (even switching between CPU and GPU), changing the number of threads (on CPU) and adjusting any parameters each structure might have. Since conclusions derived from these experiments should be applicable to a wide variety of agent-based models, the following requirements should be met:
 
 ##### Space dimensions
 
-Currently space can have 1, 2, 3 or 4 dimensions, and those dimensions can be of any type, not just spatial. The fact that dimensions don't have to be of the same type means that space partitioning structures treat each dimension separately. For example, when defining an interaction between agents we cannot just define one range value at which the interaction works, we have to specify a separate range value for each dimension.
+Currently space can have 1, 2, 3 or 4 dimensions, and those dimensions can be of any type, not just spatial. The fact that dimensions don't have to be of the same type means that space partitioning structures treat each dimension separately. For example, when defining an interaction between agents we cannot just define one range value to which the interaction is limited, we have to specify a separate value for each dimension.
 
 ##### Agent size
 
-Agents can have size in any dimension (don't have to be points).
+Agents can have size in any dimension (don't have to be points). This can complicate space partitioning structures somewhat. If it's a tree structure there's a possibility to add agents to non-leaf nodes. If it's a grid structure then the same agent can be added to multiple partitions in which case we have to prevent multiple interactions between same agents, or we can build a "fake" tree from multiple grids of varying partition sizes.
 
 ##### Space bounds
 
@@ -32,17 +32,19 @@ Space doesn't have fixed bounds, agents are free to move anywhere, and it's up t
 
 ##### Agent types
 
-Multiple agent types can be defined. This allows having agents with drastically different behaviors in a single model. This seems like an obvious requirement, but often codes that showcase a fast agent-based simulation, usually on GPU, contain only one type of agent.
+Multiple agent types can be defined. This allows having agents with drastically different behaviors in a single model.
 
 ##### Behaviors and interactions
 
-To avoid race conditions agent behavior code is split into *passes*. There are currently only two types of passes: **act** and **see**. **act** pass describes what each agent does on its own, and **see** pass describes how two agents interact where one agent *sees* the other one. This strict role assignment for the two agents as **seer** and **seen** in **see** passes is what enables lock-free parallelism: knowing which of the two agents can change its state (**seer**) and which one is read-only (**seen**) enables scheduling **see** code execution so that a **seer** agent is never in more than one thread during a **see** pass.
+To avoid data races and race conditions agent behavior code is split into an arbitrary number of *passes*. There are currently only two types of passes: **act** and **see**.
 
-Multiple passes can be defined in any order. Each **act** pass is defined for a specific agent type and specifies a procedure that is applied to all "live" agents of that type. Each **see** pass is defined for two agent groups: **seer** agent type and **seen** agent type, and specifies a procedure that is applied to pairs of agents that a space partitioning structure decides should interact.
+**act** pass describes what each agent does with its own data, there is no communication with other agents. This pass is defined for a specific agent type and specifies a procedure that is applied to all "live" agents of that type.
+
+**see** pass describes how two agents interact, the **seer** agent and the **seen** agent. This strict role assignment for these two agents is what enables lock-free parallelism: knowing that the **seer** agent can change its state and the **seen** agent is read-only enables scheduling **see** code execution so that a **seer** agent is never in more than one thread during this pass. **see** pass is defined for two agent groups: **seer** agent type and **seen** agent type, and specifies a procedure that is applied to all agent pairs the space partitioning structure decides should interact.
 
 ##### Communication methods
 
-Communication methods can be combined: communicating with neighbors, through direct references, connection objects or a grid [particle mesh method](https://en.wikipedia.org/wiki/Particle_Mesh),
+Communication methods can be combined: communicating with neighbors within specified range(s), through direct references, connection objects or a [grid](https://en.wikipedia.org/wiki/Particle_Mesh). Currently agents only interact with neighbors, but I took special care to not preclude any of the other mechanisms from being added.
 
 ##### Adding/removing agents
 
