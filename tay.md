@@ -55,11 +55,11 @@ Agents can be removed from or added to a running simulation. This requires certa
 
 ## Space partitioning structures
 
-Generally with space partitioning structures it seems that there's often an optimal depth to which we partition the space. If we partition the space too little we get too many agents to reject during the narrow phase (distance test), and if we partition too much we get more partitions to build, traverse and test for closeness.
+Generally if we partition the space too little we get too many agents to reject during the narrow phase (distance test), and if we partition too much we get more partitions to build, traverse and test for closeness; and this optimum can be clearly seen in the test results, when we vary the partition depth.
 
-For this reason there are two parameters that can be adjusted for all partitioning structures. First is a set of sizes, one for each dimension, that represent the suggested smallest partition size for each dimension. They are just "suggested" because we can have multiple interactions in a model, each with its own interaction radii, and the smallest partition sizes should be related to those interaction radii. The other is a parameter called `depth_correction` that can then be varied to adjust the smallest partition sizes as `size = suggested_size / 2^depth_correction`.
+For this reason there are two parameters that can be adjusted for all partitioning structures. First is a set of sizes, one for each dimension, that represent the suggested smallest partition size for each dimension. They are only "suggested" because we can have multiple interactions (**see** passes) in a model, each with its own interaction radii, and the smallest partition sizes should be related to those interaction radii. The other is a parameter called `depth_correction` that can then be varied to adjust the smallest partition sizes: `size = suggested_size / 2^depth_correction`.
 
-Also note that unlike most other implementations of grids and trees for this kind of purpose, because we can have multiple interactions with drastically different interaction radii, we cannot assume that to find all agents that are within interaction range we can just consider a partition's immediate neighboring partitions. Generally, as mentioned above, interaction radii are used just as an initial, approximate value for a good partition size.
+> Note that because we can have multiple interactions with drastically different interaction radii, we cannot just consider a partition's immediate neighboring partitions to find all agents that are within interaction range. Generally, as mentioned above, interaction radii are used just as an initial, approximate value for a good partition size.
 
 Currently all partitioning structures are completely rebuilt at the start of each step since profiling shows that it takes very little time compared to actual agent interactions.
 
