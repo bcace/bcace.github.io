@@ -71,9 +71,25 @@ Simple is a "non-structure" used either when *all* agents have to interact, or j
 
 #### Tree
 
-Tree structure is a k-d tree; a binary tree where a partition is split in half along a dimension with largest ratio between partition size in that dimension and smallest partition size in the same dimension. Neighboring partitions are found by traversing the tree and testing partitions' bounding boxes for overlap. (Threading)
+K-d tree.
+
+**Update:** At the start of each simulation step the tree is cleared so that it only contains the root partition. The bounding box of the root partition is set to contain all agents. When adding an agent to the tree the the appropriate branch is traversed as far as possible and if further partitioning is needed the deepest partition is split in half along a dimension with largest ratio between partition size in that dimension and smallest partition size in the same dimension.
+
+**Act:** Each thread traverses the entire tree but only processes agents of certain partitions, so that all threads together process all partitions. Workload is balanced better if number of partitions is larger, and the algorithm naturally works with agents in non-leaf partitions.
+
+**See:** Similar to **act** passes, each thread traverses the entire tree and skips partitions to get **seer** agents. To get **seen** agents for each of those **seer** agent partitions tree is traversed again (without skipping) and each of those partitions' bounding boxes is tested for overlap with the **seer** partition's bounding box inflated by the **see** pass radii. Since no two threads ever have the same **seer** partition there is no danger of writing to the same memory location from multiple threads. All threads process the same partitions for **seen** agents, but **seen** agents are read-only.
 
 #### Grid
+
+(hash grid, XOR hash function, space in memory for bins can be adjusted)
+
+**Update:** With known space bounding box and known smallest partition sizes in each dimension, each agent's position is converted into cell indices, and those cell indices are then hashed to find the bin the agent belongs to. All bins containing agents are linked into a list.
+
+**Act:** Each thread iterates through the same list of bins and skips certain bins, so that all threads together process all bins.
+
+**See:** Similar to **act** pass each thread iterates through bins and skips bins that other threads are processing to get **seer** agents. Unlike the tree structure where we can test the current **seer** partition's bounding box inflated with **see** radii for overlap with **seen** partitions' bounding boxes, because bins can represent multiple grid cells (partitions) ...
+
+(individual agents, bin kernels because we don't want to iterate through all bins...)
 
 ### GPU
 
