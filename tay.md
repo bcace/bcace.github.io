@@ -71,7 +71,7 @@ Simple is a "non-structure" used either when *all* agents have to interact, or j
 
 #### Tree
 
-K-d tree.
+`CpuTree` structure is a k-d tree.
 
 **Update:** At the start of each simulation step the tree is cleared so that it only contains the root partition. The bounding box of the root partition is set to contain all agents. When adding an agent to the tree the the appropriate branch is traversed as far as possible and if further partitioning is needed the deepest partition is split in half along a dimension with largest ratio between partition size in that dimension and smallest partition size in the same dimension.
 
@@ -81,15 +81,17 @@ K-d tree.
 
 #### Grid
 
-(hash grid, XOR hash function, space in memory for bins can be adjusted)
+`CpuGrid` structure is a hash grid. Hash function used to map grid cell indices to hash indices (bin indices) is a simple XOR hash function.
 
-**Update:** With known space bounding box and known smallest partition sizes in each dimension, each agent's position is converted into cell indices, and those cell indices are then hashed to find the bin the agent belongs to. All bins containing agents are linked into a list.
+**Update:** Space bounding box and suggested partition sizes are used to convert each agent's position into grid cell indices, which are then hashed to find the appropriate bin for the agent. All non-empty bins are linked into a list for faster access.
 
-**Act:** Each thread iterates through the same list of bins and skips certain bins, so that all threads together process all bins.
+**Act:** Each thread iterates through its assigned bins so that each bin's agents get processed by one of the threads.
 
-**See:** Similar to **act** pass each thread iterates through bins and skips bins that other threads are processing to get **seer** agents. Unlike the tree structure where we can test the current **seer** partition's bounding box inflated with **see** radii for overlap with **seen** partitions' bounding boxes, because bins can represent multiple grid cells (partitions) ...
+**See:** Each thread iterates through its set of **seer** bins and finds neighboring **seen** bins through its **seer** agents' positions. Because of hash collisions a single bin can contain agents from multiple grid cells, so in principle we have to find neighboring bins for each **seer** bin agent, but since most bins contain agents of only one cell the algorithm caches found neighboring bins.
 
-(individual agents, bin kernels because we don't want to iterate through all bins...)
+To find neighboring **seen** bins, **seer** agent's cell indices are calculated from its position, then cell sizes and **see** radii are used to build the "kernel" of cells neighboring the **seer** cell, and finally indices of each kernel cell are hashed to find the corresponding bins.
+
+Hash collisions also have to be taken into account when looking at kernel **seen** bins. One problem is that kernel **seen** bins can also contain agents from multiple cells, and some of those cells obviously might be outside the kernel. Simplest solution is to ignore the problem and just let those agents get rejected during the narrow phase (then it becomes a problem of reducing the number of collisions, which we have to do anyway). The other problem is that a hash collision could cause the same bin to appear multiple times in the same kernel. The fix for that is to mark bins as already visited and skip them on subsequent encounters.
 
 ### GPU
 
