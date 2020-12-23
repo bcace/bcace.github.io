@@ -67,21 +67,21 @@ Currently all partitioning structures are completely rebuilt at the start of eac
 
 #### Simple
 
-Simple is a "non-structure" used either when *all* agents have to interact, or just as a reference to measure the effectiveness of other, more elaborate structures. It just distributes agents evenly between threads, and of course we have to test each agent pair for distance and throw away pairs that are too far apart.
+`CpuSimple` is a "non-structure" structure used either when *all* agents have to interact, or when we need a reference simulation run to measure the effectiveness of other, more elaborate structures. It distributes agents evenly between threads and performs only the narrow phase when deciding which agents should interact.
 
 #### Tree
 
-`CpuTree` structure is a k-d tree.
+`CpuTree` structure is a k-d tree. Can store agents that have size (are not points) in non-leaf nodes.
 
-**Update:** At the start of each simulation step the tree is cleared so that it only contains the root partition. The bounding box of the root partition is set to contain all agents. When adding an agent to the tree the the appropriate branch is traversed as far as possible and if further partitioning is needed the deepest partition is split in half along a dimension with largest ratio between partition size in that dimension and smallest partition size in the same dimension.
+**Update:** At the start of each simulation step tree is cleared so that it only contains the root partition, and the root partition's bounding box is updated to enclose all agents. When adding an agent to the tree the the appropriate branch is traversed as far as possible and when further partitioning is needed partitions are split in half along a dimension with largest ratio between partition size in that dimension and smallest partition size in the same dimension.
 
-**Act:** Each thread traverses the entire tree but only processes agents of certain partitions, so that all threads together process all partitions. Workload is balanced better if number of partitions is larger, and the algorithm naturally works with agents in non-leaf partitions.
+**Act:** All tree partitions are evenly distributed among threads for processing.
 
-**See:** Similar to **act** passes, each thread traverses the entire tree and skips partitions to get **seer** agents. To get **seen** agents for each of those **seer** agent partitions tree is traversed again (without skipping) and each of those partitions' bounding boxes is tested for overlap with the **seer** partition's bounding box inflated by the **see** pass radii. Since no two threads ever have the same **seer** partition there is no danger of writing to the same memory location from multiple threads. All threads process the same partitions for **seen** agents, but **seen** agents are read-only.
+**See:** All tree partitions are evenly distributed among threads as **seer** partitions, or partitions containing **seer** agents. To get **seen** agents for each of those **seer** partitions, the tree is traversed and each of those partitions' bounding boxes is tested for overlap with the **seer** partition's bounding box inflated by the **see** pass radii. Since no two threads ever have the same **seer** partition there is no danger of writing to the same memory location from multiple threads. All threads process the same partitions for **seen** agents, but **seen** agents are read-only.
 
 #### Grid
 
-`CpuGrid` structure is a hash grid. Hash function used to map grid cell indices to hash indices (bin indices) is a simple XOR hash function.
+`CpuGrid` structure is a hash grid. Hash function used to map grid cell indices to bin indices is a simple XOR hash function.
 
 **Update:** Space bounding box and suggested partition sizes are used to convert each agent's position into grid cell indices, which are then hashed to find the appropriate bin for the agent. All non-empty bins are linked into a list for faster access.
 
