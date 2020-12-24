@@ -63,6 +63,8 @@ For this reason there are two parameters that can be adjusted for all partitioni
 
 Currently all partitioning structures are completely rebuilt at the start of each step since profiling shows that it takes very little time compared to actual agent interactions.
 
+> GPU structures: GPU structures have an additional difficulty of having to copy data between CPU and GPU and fix any pointers used on both sides (calculating relative addresses and then adding them to the appropriate new base addresses). These data transfers are reduced to essential data needed to continue the simulation run, which is reflected in different scenarios when switching between different structures. For example, when switching from a CPU structure to a GPU structure we have to push the entire simulation state to GPU, but when switching from `GpuSimple` to `GpuTree` only the tree structure data has to be copied and pointer addresses have to be fixed.
+
 #### Simple
 
 `CpuSimple` is a "non-structure" structure used either when *all* agents have to interact, or when we need a reference simulation run to measure the effectiveness of other, more elaborate structures. It distributes agents evenly between threads and performs only the narrow phase when deciding which agents should interact.
@@ -97,8 +99,12 @@ Hash collisions also have to be taken into account when looking at kernel **seen
 
 ## Tests
 
-(test model, variations, result verification)
-
 All structures are tested and results are compared to make sure there are no race conditions (other than small errors caused by some floating point operations not being commutative) regardless of agent organization, number of execution threads or hardware used. Just to make sure structure implementations are completely independent there is a mode of execution where all structures are used, each one for a single step of the simulation.
 
-(i5-8250U)
+(goal, result verification)
+
+(test model: agent behavior)
+
+(variations: depth_correction, see radii, number of agents)
+
+(hardware: i5-8250U, UHD Graphics 620, turbo boost on/off)
