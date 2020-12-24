@@ -63,15 +63,15 @@ For this reason there are two parameters that can be adjusted for all partitioni
 
 Currently all partitioning structures are completely rebuilt at the start of each step since profiling shows that it takes very little time compared to actual agent interactions.
 
-> GPU structures: GPU structures have an additional difficulty of having to copy data between CPU and GPU and fix any pointers used on both sides (calculating relative addresses and then adding them to the appropriate new base addresses). These data transfers are reduced to essential data needed to continue the simulation run, which is reflected in different scenarios when switching between different structures. For example, when switching from a CPU structure to a GPU structure we have to push the entire simulation state to GPU, but when switching from `GpuSimple` to `GpuTree` only the tree structure data has to be copied and pointer addresses have to be fixed.
+> GPU structures have an additional difficulty of having to copy data between CPU and GPU and fix any pointers used on both sides (calculating relative addresses and then adding them to the appropriate new base addresses). These data transfers are reduced to essential data needed to continue the simulation run, which is reflected in different scenarios when switching between different structures. For example, when switching from a CPU structure to a GPU structure we have to push the entire simulation state to GPU, but when switching from `GpuSimple` to `GpuTree` only the tree structure data has to be copied and pointer addresses have to be fixed.
 
-#### Simple
+### Simple
 
 `CpuSimple` is a "non-structure" structure used either when *all* agents have to interact, or when we need a reference simulation run to measure the effectiveness of other, more elaborate structures. It distributes agents evenly between threads and performs only the narrow phase when deciding which agents should interact.
 
 `GpuSimple` structure works similarly on GPU, only copying data to and from GPU when absolutely necessary. Because of large difference in speed it has the `direct` option that switches iteration through **seen** agents on each thread from using linked list pointers to assuming that all agents are consecutive in a single array. This option can be used when number of agents in a simulation doesn't change.
 
-#### Tree
+### Tree
 
 `CpuTree` structure is a k-d tree. Can store agents that have size (are not points) in non-leaf nodes.
 
@@ -83,7 +83,7 @@ Currently all partitioning structures are completely rebuilt at the start of eac
 
 `GpuTree` structure is actually a hybrid: tree update still happens on the CPU, then minimal updates to the structure are copied over to the GPU where the passes get executed. At the end of the simulation step only the new agent positions are copied back to the CPU in order to be able to update the tree again.
 
-#### Grid
+### Grid
 
 `CpuGrid` structure is a hash grid. Hash function used to map grid cell indices to bin indices is a simple XOR hash function.
 
