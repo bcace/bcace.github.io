@@ -63,11 +63,11 @@ For this reason there are two parameters that can be adjusted for all partitioni
 
 Currently all partitioning structures are completely rebuilt at the start of each step since profiling shows that it takes very little time compared to actual agent interactions.
 
-### CPU
-
 #### Simple
 
 `CpuSimple` is a "non-structure" structure used either when *all* agents have to interact, or when we need a reference simulation run to measure the effectiveness of other, more elaborate structures. It distributes agents evenly between threads and performs only the narrow phase when deciding which agents should interact.
+
+`GpuSimple` structure works similarly on GPU, only copying data to and from GPU when absolutely necessary. Because of large difference in speed it has the `direct` option that switches iteration through **seen** agents on each thread from using linked list pointers to assuming that all agents are consecutive in a single array. This option can be used when number of agents in a simulation doesn't change.
 
 #### Tree
 
@@ -78,6 +78,8 @@ Currently all partitioning structures are completely rebuilt at the start of eac
 **Act:** All tree partitions are evenly distributed among threads for processing.
 
 **See:** All tree partitions are evenly distributed among threads as **seer** partitions, or partitions containing **seer** agents. To get **seen** agents for each of those **seer** partitions, the tree is traversed and each of those partitions' bounding boxes is tested for overlap with the **seer** partition's bounding box inflated by the **see** pass radii. Since no two threads ever have the same **seer** partition there is no danger of writing to the same memory location from multiple threads. All threads process the same partitions for **seen** agents, but **seen** agents are read-only.
+
+`GpuTree` structure is actually a hybrid: tree update still happens on the CPU, then minimal updates to the structure are copied over to the GPU where the passes get executed. At the end of the simulation step only the new agent positions are copied back to the CPU in order to be able to update the tree again.
 
 #### Grid
 
@@ -92,12 +94,6 @@ Currently all partitioning structures are completely rebuilt at the start of eac
 To find neighboring **seen** bins, **seer** agent's cell indices are calculated from its position, then cell sizes and **see** radii are used to build the "kernel" of cells neighboring the **seer** cell, and finally indices of each kernel cell are hashed to find the corresponding bins.
 
 Hash collisions also have to be taken into account when looking at kernel **seen** bins. One problem is that kernel **seen** bins can also contain agents from multiple cells, and some of those cells obviously might be outside the kernel. Simplest solution is to ignore the problem and just let those agents get rejected during the narrow phase (then it becomes a problem of reducing the number of collisions, which we have to do anyway). The other problem is that a hash collision could cause the same bin to appear multiple times in the same kernel. The fix for that is to mark bins as already visited and skip them on subsequent encounters.
-
-### GPU
-
-#### Simple
-
-#### Tree
 
 ## Tests
 
