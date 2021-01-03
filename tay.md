@@ -105,7 +105,7 @@ Variables in these experiments can be grouped into model variables and system va
 
 So far I only had the chance to run simulations on my ThinkPad T480 with the i5-8250U processor (4 physical and 8 logical processors, base frequency 1.6 Ghz, max. frequency 3.4 GHz (Turbo Boost)) and UHD Graphics 620 (I used Intel's OpenCL SDK for GPU simulations). GPU results are just there to verify that the system works correctly, with consistent simulation results, even when switching between CPU and GPU strucures during simulation runs.
 
-Simulation run-times in milliseconds per step are grouped in tables for each model setting. Columns in tables are for `depth_correction`, where applicable. For now only the uniform agent distribution is used (no clumps). Numbers in parentheses are run-times with Turbo Boost enabled (which is the default, but not very consistent when trying to benchmark something). Interactions number above each table is the average number of interaction each agent has with other agents per simulation step.
+Simulation run-times in milliseconds per step are grouped in tables for each model setting. Columns in tables are for different values of `depth_correction`, where the first three columns are when interaction code is really small so the effects of structures are more noticeable, and the last three columns are when the same code is executed 50 times. For now only the uniform agent distribution is used (no clumps). Numbers in parentheses are run-times with Turbo Boost enabled (which is the default, but not very consistent when trying to benchmark something). Interactions number above each table is the average number of interaction each agent has with other agents per simulation step.
 
 **Agents**|10000
 **Steps**|1000
@@ -114,33 +114,33 @@ Simulation run-times in milliseconds per step are grouped in tables for each mod
 
 Distribution: **uniform**, interaction radius: **50**, interactions: **9.259736**
 
-||0|1|2
-|---|---|---|---
-|`CpuSimple`|241 (121.797)| | |
-|`CpuTree`|13.1998 (7.60449)|9.1434 (5.2125)|21.0415 (13.2133)
-|`CpuGrid`|12.2572 (7.70857)|6.91087 (3.6075)|12.0181 (6.53737)
-|`GpuSimple` (direct)|12.1861| | |
-|`GpuSimple` (indirect)|13.28| | |
-|`GpuTree`|13.5655|13.5737|13.5772
+||0|1|2|0|1|2
+|---|---|---|---|---|---|---
+|`CpuSimple`|241 (121.797)| | |237.811 (116.869)| | |
+|`CpuTree`|13.1998 (7.60449)|9.1434 (5.2125)|21.0415 (13.2133)|26.3292 (12.8245)|20.9866 (10.1671)|31.4384 (16.1106)
+|`CpuGrid`|12.2572 (7.70857)|6.91087 (3.6075)|12.0181 (6.53737)|23.2136 (12.8303)|17.8319 (10.7693)|21.9292 (14.1407)
+|`GpuSimple` (direct)|12.1861| | |13.2801| | |
+|`GpuSimple` (indirect)|13.28| | |14.0834| | |
+|`GpuTree`|13.5655|13.5737|13.5772|14.3676|14.7656|14.3933
 
 Distribution: **uniform**, interaction radius: **100**, interactions: **68.579978**
 
-||0|1|2
-|---|---|---|---
-|`CpuSimple`|288.558 (196.74)| | |
-|`CpuTree`|67.9695 (44.4542)|16.7269 (10.0651)|21.9998 (14.3251)
-|`CpuGrid`|64.9858 (43.1337)|14.4933 (8.87249)|17.7145 (10.8112)
-|`GpuSimple` (direct)|14.4486| | |
-|`GpuSimple` (indirect)|15.7601| | |
-|`GpuTree`|16.0466|16.0327|16.0371
+||0|1|2|0|1|2
+|---|---|---|---|---|---|---
+|`CpuSimple`|288.558 (196.74)| | |348.111 (246.908)| | |
+|`CpuTree`|67.9695 (44.4542)|16.7269 (10.0651)|21.9998 (14.3251)|165.687 (101.904)|114.562 (70.3002)|106.946 (69.1677)
+|`CpuGrid`|64.9858 (43.1337)|14.4933 (8.87249)|17.7145 (10.8112)|153.531 (98.4057)|95.5592 (58.8914)|98.3469 (60.2943)
+|`GpuSimple` (direct)|14.4486| | |22.6436| | |
+|`GpuSimple` (indirect)|15.7601| | |23.3795| | |
+|`GpuTree`|16.0466|16.0327|16.0371|26.1787|32.8293|32.2879
 
 Distribution: **uniform**, interaction radius: **200**, interactions: **466.408336**
 
-||0|1|2
-|---|---|---|---
-|`CpuSimple`|371.232 (250.223)| | |
-|`CpuTree`|542.854 (328.205)|87.6051 (58.7495)|55.7068 (37.8674)
-|`CpuGrid`|325.819 (207.066)|79.3073 (54.3908)|54.2915 (36.9899)
-|`GpuSimple` (direct)|28.2817| | |
-|`GpuSimple` (indirect)|29.4292| | |
-|`GpuTree`|29.7354|29.7095|32.2067
+||0|1|2|0|1|2
+|---|---|---|---|---|---|---
+|`CpuSimple`|371.232 (250.223)| | |876.459 (573.049)| | |
+|`CpuTree`|542.854 (328.205)|87.6051 (58.7495)|55.7068 (37.8674)|1523.16 (851.918)|774.495 (460.812)|710.917 (425.175)
+|`CpuGrid`|325.819 (207.066)|79.3073 (54.3908)|54.2915 (36.9899)|1015.64 (599.681)|661.136 (402.6)|606.212 (372.979)
+|`GpuSimple` (direct)|28.2817| | |98.0489| | |
+|`GpuSimple` (indirect)|29.4292| | |96.5526| | |
+|`GpuTree`|29.7354|29.7095|32.2067|97.2047|96.5641|97.035
