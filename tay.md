@@ -101,6 +101,47 @@ So finally we come to the point of the project - comparison of space partitionin
 
 Since focus is on optimizing spatial agent interactions the model I used is a very abstracted version of flocking. To make agent spatial distribution consistent during simulation runs (and therefore number of interactions), agent movement is predefined (it doesn't depend on agent interactions). To verify that the simulation is running correctly there is a separate `f_buffer` variable that gets updated at each step by the agent's interactions with other agents. I compare values of `f_buffer` variables between simulation runs to make sure that all simulations of the same model run exactly the same, regardless of any differences between how those simulation were run, on which hardware they were run, and which structures were used.
 
-Variables in these experiments can be grouped into model variables and system variables. Model variables are the number of agents in the model, agent distribution in space (density and "clumpiness"), and interaction radii. System variables are the number of threads the simulation is running on, the space partitioning structure used (including whether it's a CPU or GPU structure), `depth_correction` (where applicable), and any structure-specific settings like `GpuSimple` structure's `direct` setting or hash table size dictated by the available memory for the `CpuGrid` structure.
+Variables in these experiments can be grouped into model variables and system variables. Model variables are the number of agents in the model, agent distribution in space (density and "clumpiness"), interaction radii, and how demanding the interaction code is. System variables are the number of threads the simulation is running on, the space partitioning structure used (including whether it's a CPU or GPU structure), `depth_correction` (where applicable), and any structure-specific settings like `GpuSimple` structure's `direct` setting or hash table size dictated by the available memory for the `CpuGrid` structure.
 
 So far I only had the chance to run simulations on my ThinkPad T480 with the i5-8250U processor (4 physical and 8 logical processors, base frequency 1.6 Ghz, max. frequency 3.4 GHz (Turbo Boost)) and UHD Graphics 620 (I used Intel's OpenCL SDK for GPU simulations). GPU results are just there to verify that the system works correctly, with consistent simulation results, even when switching between CPU and GPU strucures during simulation runs.
+
+Simulation running times in milliseconds per step are grouped in tables for each model setting. For now only the uniform agent distribution is used (no clumps).
+
+**Agents**: 10000
+**Steps**: 1000
+**Space size**: 1000 * 1000 * 1000
+**Distribution**: uniform
+**Threads (CPU)**: 8
+
+**Interaction radius**: 50
+**Average interactions per agent**: 9.259736
+||0|1|2
+|-|-|-|-
+|`CpuSimple`|241| | |
+|`CpuTree`|13.1998|9.1434|21.0415
+|`CpuGrid`|12.2572|6.91087|12.0181
+|`GpuSimple` (direct)|12.1861| | |
+|`GpuSimple` (indirect)|13.28| | |
+|`GpuTree`|13.5655|13.5737|13.5772
+
+**Interaction radius**: 100
+**Average interactions per agent**: 68.579978
+||0|1|2
+|-|-|-|-
+|`CpuSimple`|288.558| | |
+|`CpuTree`|67.9695|16.7269|21.9998
+|`CpuGrid`|64.9858|14.4933|17.7145
+|`GpuSimple` (direct)|14.4486| | |
+|`GpuSimple` (indirect)|15.7601| | |
+|`GpuTree`|16.0466|16.0327|16.0371
+
+**Interaction radius 200**:
+**Average interactions per agent**: 466.408336
+||0|1|2
+|-|-|-|-
+|`CpuSimple`|371.232| | |
+|`CpuTree`|542.854|87.6051|55.7068
+|`CpuGrid`|325.819|79.3073|54.2915
+|`GpuSimple` (direct)|28.2817| | |
+|`GpuSimple` (indirect)|29.4292| | |
+|`GpuTree`|29.7354|29.7095|32.2067
