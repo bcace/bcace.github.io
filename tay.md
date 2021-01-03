@@ -105,16 +105,14 @@ Variables in these experiments can be grouped into model variables and system va
 
 So far I only had the chance to run simulations on my ThinkPad T480 with the i5-8250U processor (4 physical and 8 logical processors, base frequency 1.6 Ghz, max. frequency 3.4 GHz (Turbo Boost)) and UHD Graphics 620 (I used Intel's OpenCL SDK for GPU simulations). GPU results are just there to verify that the system works correctly, with consistent simulation results, even when switching between CPU and GPU strucures during simulation runs.
 
-Simulation run-times in milliseconds per step are grouped in tables for each model setting. For now only the uniform agent distribution is used (no clumps). Numbers in parentheses are run-times are with Turbo Boost enabled (which is the default, but not very consistent when trying to benchmark something).
+Simulation run-times in milliseconds per step are grouped in tables for each model setting. Columns in tables are for `depth_correction`, where applicable. For now only the uniform agent distribution is used (no clumps). Numbers in parentheses are run-times are with Turbo Boost enabled (which is the default, but not very consistent when trying to benchmark something).
 
-**Agents**: 10000
-**Steps**: 1000
-**Space size**: 1000 * 1000 * 1000
-**Distribution**: uniform
-**Threads (CPU)**: 8
+**Agents**|10000
+**Steps**|1000
+**Space size**|1000 * 1000 * 1000
+**Threads (CPU)**|8
 
-**Interaction radius**: 50
-**Average interactions per agent**: 9.259736
+**Distribution**: uniform, **interaction radius**: 50, **average interactions per agent**: 9.259736
 
 ||0|1|2
 |---|---|---|---
@@ -125,8 +123,7 @@ Simulation run-times in milliseconds per step are grouped in tables for each mod
 |`GpuSimple` (indirect)|13.28| | |
 |`GpuTree`|13.5655|13.5737|13.5772
 
-**Interaction radius**: 100
-**Average interactions per agent**: 68.579978
+**Distribution**: uniform, **interaction radius**: 100, **average interactions per agent**: 68.579978
 
 ||0|1|2
 |---|---|---|---
@@ -137,8 +134,7 @@ Simulation run-times in milliseconds per step are grouped in tables for each mod
 |`GpuSimple` (indirect)|15.7601| | |
 |`GpuTree`|16.0466|16.0327|16.0371
 
-**Interaction radius 200**:
-**Average interactions per agent**: 466.408336
+Distribution: **uniform**, interaction radius: **200**, average interactions per agent: **466.408336**
 
 ||0|1|2
 |---|---|---|---
