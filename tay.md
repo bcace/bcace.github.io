@@ -105,7 +105,7 @@ Variables in these experiments can be grouped into model variables and system va
 
 So far I only had the chance to run simulations on my ThinkPad T480 with the i5-8250U processor (4 physical and 8 logical processors, base frequency 1.6 Ghz, max. frequency 3.4 GHz (Turbo Boost)) and UHD Graphics 620 (I used Intel's OpenCL SDK for GPU simulations). GPU results are just there to verify that the system works correctly, with consistent simulation results, even when switching between CPU and GPU strucures during simulation runs.
 
-Simulation running times in milliseconds per step are grouped in tables for each model setting. For now only the uniform agent distribution is used (no clumps).
+Simulation run-times in milliseconds per step are grouped in tables for each model setting. For now only the uniform agent distribution is used (no clumps). Numbers in parentheses are run-times are with Turbo Boost enabled (which is the default, but not very consistent when trying to benchmark something).
 
 **Agents**: 10000
 **Steps**: 1000
@@ -115,33 +115,36 @@ Simulation running times in milliseconds per step are grouped in tables for each
 
 **Interaction radius**: 50
 **Average interactions per agent**: 9.259736
+
 ||0|1|2
-|-|-|-|-
-|`CpuSimple`|241| | |
-|`CpuTree`|13.1998|9.1434|21.0415
-|`CpuGrid`|12.2572|6.91087|12.0181
+|---|---|---|---
+|`CpuSimple`|241 (121.797)| | |
+|`CpuTree`|13.1998 (7.60449)|9.1434 (5.2125)|21.0415 (13.2133)
+|`CpuGrid`|12.2572 (7.70857)|6.91087 (3.6075)|12.0181 (6.53737)
 |`GpuSimple` (direct)|12.1861| | |
 |`GpuSimple` (indirect)|13.28| | |
 |`GpuTree`|13.5655|13.5737|13.5772
 
 **Interaction radius**: 100
 **Average interactions per agent**: 68.579978
+
 ||0|1|2
-|-|-|-|-
-|`CpuSimple`|288.558| | |
-|`CpuTree`|67.9695|16.7269|21.9998
-|`CpuGrid`|64.9858|14.4933|17.7145
+|---|---|---|---
+|`CpuSimple`|288.558 (196.74)| | |
+|`CpuTree`|67.9695 (44.4542)|16.7269 (10.0651)|21.9998 (14.3251)
+|`CpuGrid`|64.9858 (43.1337)|14.4933 (8.87249)|17.7145 (10.8112)
 |`GpuSimple` (direct)|14.4486| | |
 |`GpuSimple` (indirect)|15.7601| | |
 |`GpuTree`|16.0466|16.0327|16.0371
 
 **Interaction radius 200**:
 **Average interactions per agent**: 466.408336
+
 ||0|1|2
-|-|-|-|-
-|`CpuSimple`|371.232| | |
-|`CpuTree`|542.854|87.6051|55.7068
-|`CpuGrid`|325.819|79.3073|54.2915
+|---|---|---|---
+|`CpuSimple`|371.232 (250.223)| | |
+|`CpuTree`|542.854 (328.205)|87.6051 (58.7495)|55.7068 (37.8674)
+|`CpuGrid`|325.819 (207.066)|79.3073 (54.3908)|54.2915 (36.9899)
 |`GpuSimple` (direct)|28.2817| | |
 |`GpuSimple` (indirect)|29.4292| | |
 |`GpuTree`|29.7354|29.7095|32.2067
