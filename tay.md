@@ -107,6 +107,8 @@ So far I only had the chance to run simulations on my ThinkPad T480 with the i5-
 
 Simulation run-times in milliseconds per step are grouped in tables for each model setting. Columns in tables are for different values of `depth_correction`, where the first three columns are when interaction code is really small so the effects of structures are more noticeable, and the last three columns are when the same code is executed 50 times. For now only the uniform agent distribution is used (no clumps). Interactions number above each table is the average number of interaction each agent has with other agents per simulation step.
 
+> Note that the following run-times are not the fastest I can get on my machine. I disabled Turbo Boost to make numbers more consistent, but with it enabled (which is the default) I get 1.5 - 2 times better run-times.
+
 **Agents**|10000
 **Steps**|1000
 **Space size**|1000 * 1000 * 1000
@@ -144,5 +146,3 @@ Distribution: **uniform**, interaction radius: **200**, interactions: **466.4083
 |`GpuSimple` (direct)|28.2817| | |98.0489| | |
 |`GpuSimple` (indirect)|29.4292| | |96.5526| | |
 |`GpuTree`|29.7354|29.7095|32.2067|97.2047|96.5641|97.035
-
-Note that these numbers are not the fastest I can get on my machine. I disabled Turbo Boost to make numbers more consistent, but with it enabled (which is the default) I get 1.5 - 2 times faster run-times.
