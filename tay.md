@@ -79,8 +79,6 @@ Currently all partitioning structures are completely rebuilt at the start of eac
 
 **See:** All tree partitions are evenly distributed among threads as **seer** partitions, or partitions containing **seer** agents. To get **seen** agents for each of those **seer** partitions, the tree is traversed and each of those partitions' bounding boxes is tested for overlap with the **seer** partition's bounding box inflated by the **see** pass radii. Since no two threads ever have the same **seer** partition there is no danger of writing to the same memory location from multiple threads. All threads process the same partitions for **seen** agents, but **seen** agents are read-only.
 
-`GpuTree` structure is actually a hybrid: tree update still happens on the CPU, then minimal updates to the structure are copied over to the GPU where the passes get executed. At the end of the simulation step only the new agent positions are copied back to the CPU in order to be able to update the tree again.
-
 ### Grid
 
 `CpuGrid` structure is a hash grid. Hash function used to map grid cell indices to bin indices is a simple XOR hash function.
@@ -123,7 +121,6 @@ Distribution: **uniform**, interaction radius: **50**, interactions: **9.259736*
 |`CpuGrid`|12.2572|6.91087|12.0181|23.2136|17.8319|21.9292
 |`GpuSimple` (direct)|12.1861| | |13.2801| | |
 |`GpuSimple` (indirect)|13.28| | |14.0834| | |
-|`GpuTree`|13.5655|13.5737|13.5772|14.3676|14.7656|14.3933
 
 Distribution: **uniform**, interaction radius: **100**, interactions: **68.579978**
 
@@ -134,7 +131,6 @@ Distribution: **uniform**, interaction radius: **100**, interactions: **68.57997
 |`CpuGrid`|64.9858|14.4933|17.7145|153.531|95.5592|98.3469
 |`GpuSimple` (direct)|14.4486| | |22.6436| | |
 |`GpuSimple` (indirect)|15.7601| | |23.3795| | |
-|`GpuTree`|16.0466|16.0327|16.0371|26.1787|32.8293|32.2879
 
 Distribution: **uniform**, interaction radius: **200**, interactions: **466.408336**
 
@@ -145,4 +141,3 @@ Distribution: **uniform**, interaction radius: **200**, interactions: **466.4083
 |`CpuGrid`|325.819|79.3073|54.2915|1015.64|661.136|606.212
 |`GpuSimple` (direct)|28.2817| | |98.0489| | |
 |`GpuSimple` (indirect)|29.4292| | |96.5526| | |
-|`GpuTree`|29.7354|29.7095|32.2067|97.2047|96.5641|97.035
