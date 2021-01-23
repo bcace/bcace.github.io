@@ -1,0 +1,16 @@
+0 4
+CpuSimple::0 231.676
+CpuTree::0 12.8914 9.08336 20.7464 32.6317
+CpuGrid::0 11.2098 6.24507 10.6504 49.3414
+GpuSimple (direct)::0 14.4874
+GpuSimple (indirect)::0 17.8094
+CpuSimple::1 276.865
+CpuTree::1 67.2623 16.6127 21.4195 55.2724
+CpuGrid::1 61.8996 13.4727 16.6036 38.5859
+GpuSimple (direct)::1 20.0374
+GpuSimple (indirect)::1 22.4406
+CpuSimple::2 419.874
+CpuTree::2 546.438 86.8029 57.2452 79.9156
+CpuGrid::2 302.667 76.0797 51.6006 77.7928
+GpuSimple (direct)::2 28.3702
+GpuSimple (indirect)::2 37.9296
