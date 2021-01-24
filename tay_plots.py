@@ -13,10 +13,10 @@ plot_see_radii = [
 ]
 plot_structures = [
     # 'CpuSimple',
-    'CpuTree',
-    'CpuGrid',
-    # 'GpuSimple (direct)',
-    # 'GpuSimple (indirect)',
+    # 'CpuTree',
+    # 'CpuGrid',
+    'GpuSimple (direct)',
+    'GpuSimple (indirect)',
 ]
 
 def _format_and_label(label, radius):
@@ -34,10 +34,9 @@ def _format_and_label(label, radius):
         style = '-'
     elif radius == 1:
         style = '--'
-    # elif radius == 2:
-    #     style = '-.'
     else:
         style = ':'
+    # style = '-'
     return color, style, '%s R:%g' % (label, pow(2, radius) * 50.0)
 
 fig = plt.figure()
@@ -74,8 +73,8 @@ with open('../tay/benchmark/%s' % data_filename, 'r') as file:
         c, f, l = _format_and_label(label, radius)
         plt.plot(x_vals, y_vals, f, color=c, label=l)
 
+# plt.ylim([0, 100])
 
-plt.ylim([0, 100])
 plt.gca().xaxis.set_major_locator(mticker.MultipleLocator(1))
 plt.legend(bbox_to_anchor=(1, 1), loc="upper left");
 plt.tight_layout()

@@ -105,8 +105,6 @@ Variables in these experiments can be grouped into model variables and system va
 
 So far I only had the chance to run simulations on my ThinkPad T480 with the i5-8250U processor (4 physical and 8 logical processors, base frequency 1.6 Ghz, max. frequency 3.4 GHz (Turbo Boost)) and UHD Graphics 620 (I used Intel's OpenCL SDK for GPU simulations). GPU results are just there to verify that the system works correctly, with consistent simulation results, even when switching between CPU and GPU strucures during simulation runs.
 
-Simulation run-times in milliseconds per step are grouped in tables for each model setting. Columns in tables are for different values of `depth_correction`, where the first three columns are when interaction code is really small so the effects of structures are more noticeable, and the last three columns are when the same code is executed 50 times. For now only the uniform agent distribution is used (no clumps). Interactions number above each table is the average number of interaction each agent has with other agents per simulation step.
-
 > Note that the following run-times are not the fastest I can get on my machine. I disabled Turbo Boost to get more consistent results, but with it enabled (which is the default) I get 1.5 - 2 times better run-times.
 
 **Agents**|10000
@@ -114,32 +112,32 @@ Simulation run-times in milliseconds per step are grouped in tables for each mod
 **Space size**|1000 * 1000 * 1000
 **Threads (CPU)**|8
 
-Distribution: **uniform**, interaction radius: **50**, interactions: **9.259736**
+First, to show the benefits of using partitioning structures, here's a comparison of simulation run-times of the brute-force approach (`CpuSimple`) and partitioning structures (`CpuGrid`) for the case when interaction radius is 50:
 
-||0|1|2|0|1|2
-|---|---|---|---|---|---|---
-|`CpuSimple`|241| | |237.811| | |
-|`CpuTree`|13.1998|9.1434|21.0415|26.3292|20.9866|31.4384
-|`CpuGrid`|12.2572|6.91087|12.0181|23.2136|17.8319|21.9292
-|`GpuSimple` (direct)|12.1861| | |13.2801| | |
-|`GpuSimple` (indirect)|13.28| | |14.0834| | |
+![plot1](/plot1.png)
 
-Distribution: **uniform**, interaction radius: **100**, interactions: **68.579978**
+and even in the case where interaction radius is much larger at 200 (so the number of interactions is larger) the advantages can still be seen:
 
-||0|1|2|0|1|2
-|---|---|---|---|---|---|---
-|`CpuSimple`|288.558| | |348.111| | |
-|`CpuTree`|67.9695|16.7269|21.9998|165.687|114.562|106.946
-|`CpuGrid`|64.9858|14.4933|17.7145|153.531|95.5592|98.3469
-|`GpuSimple` (direct)|14.4486| | |22.6436| | |
-|`GpuSimple` (indirect)|15.7601| | |23.3795| | |
+![plot2](/plot2.png)
 
-Distribution: **uniform**, interaction radius: **200**, interactions: **466.408336**
+Next, if we look at just one of the space partitioning structures (`CpuTree`) for all three interaction radii (50, 100, 200), we can see the effect of `depth_correction` parameter that balances the overheads of updating and using the structure vs. broad phase being too broad (having to reject too many agent pairs at the narrow phase). For each interaction radius there's an optimal `depth_correction`, but it's a different value for each case:
 
-||0|1|2|0|1|2
-|---|---|---|---|---|---|---
-|`CpuSimple`|371.232| | |876.459| | |
-|`CpuTree`|542.854|87.6051|55.7068|1523.16|774.495|710.917
-|`CpuGrid`|325.819|79.3073|54.2915|1015.64|661.136|606.212
-|`GpuSimple` (direct)|28.2817| | |98.0489| | |
-|`GpuSimple` (indirect)|29.4292| | |96.5526| | |
+![plot3](/plot3.png)
+
+Comparing `CpuTree` and `CpuGrid` we can see that grids perform better for all three interaction radii:
+
+![plot4](/plot4.png)
+
+Finally, when comparing GPU brute-force approach (`GpuSimple`) and CPU space partitioning structures (`CpuTree` and `CpuGrid`) we can see that for smaller interaction radii CPU version is still faster:
+
+![plot5](/plot5.png)
+
+Of course, this last comparison is a bit unfair since my GPU is relatively low-performance, and I'm comparing brute-force and space partitioning structures, but as I mentioned before the GPU version is there only to verify that I can integrate GPU simulation execution into the system seamlessly, and obviously there's still work to be done on that front.
+
+Also an interesting thing to see on GPU is whet the effect is when iterating through agents using linked lists (indirect) and just assuming they are consecutive in an array (direct):
+
+![plot6](/plot6.png)
+
+(Telemetry)
+(average numbers of interactions)
+(thread stats)
