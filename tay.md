@@ -93,8 +93,6 @@ To find neighboring **seen** bins, **seer** agent's cell indices are calculated 
 
 Hash collisions also have to be taken into account when looking at kernel **seen** bins. One problem is that kernel **seen** bins can also contain agents from multiple cells, and some of those cells obviously might be outside the kernel. Simplest solution is to ignore the problem and just let those agents get rejected during the narrow phase (then it becomes a problem of reducing the number of collisions, which we have to do anyway). The other problem is that a hash collision could cause the same bin to appear multiple times in the same kernel. The fix for that is to mark bins as already visited and skip them on subsequent encounters.
 
-(thread balancing)
-
 ## Results
 
 So finally we come to the point of the project - comparison of space partitioning structures. Here I run a series of simulations where I apply each structure to a test model (and its variants), and then tweak the structure to see if there's a setting where it performs better than others for the given model.
@@ -112,7 +110,7 @@ So far I only had the chance to run simulations on my ThinkPad T480 with the i5-
 **Space size**|1000 * 1000 * 1000
 **Threads (CPU)**|8
 
-### Simulation run-times
+#### Simulation run-times
 
 First, to show the benefits of using partitioning structures, here's a comparison of simulation run-times of the brute-force approach (`CpuSimple`) and partitioning structures (`CpuGrid`) for the case when interaction radius is 50:
 
@@ -140,7 +138,7 @@ Also an interesting thing to see on GPU is what the effect is when iterating thr
 
 ![plot6](/plot6.png)
 
-### Efficiency
+#### Simulation efficiency
 
 Efficiency of a simulation can be measured using two numbers. First number tells us how good our space partitioning is regarding minimizing the number of agent pairs that are rejected at the narrow phase test. The following plot shows the ratio between number of agent pairs that should *actually* interact and number of agent pairs that the structure claims *could* interact (higher is better):
 
