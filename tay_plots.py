@@ -39,7 +39,7 @@ def _format_and_label(label, radius):
     # style = '-'
     return color, style, '%s R:%g' % (label, pow(2, radius) * 50.0)
 
-fig = plt.figure()
+fig = plt.figure(figsize=(8, 3.5))
 ax = plt.axes()
 
 plt.xlabel("Depth correction")
