@@ -112,6 +112,8 @@ So far I only had the chance to run simulations on my ThinkPad T480 with the i5-
 **Space size**|1000 * 1000 * 1000
 **Threads (CPU)**|8
 
+### Simulation run-times
+
 First, to show the benefits of using partitioning structures, here's a comparison of simulation run-times of the brute-force approach (`CpuSimple`) and partitioning structures (`CpuGrid`) for the case when interaction radius is 50:
 
 ![plot1](/plot1.png)
@@ -134,10 +136,16 @@ Finally, when comparing GPU brute-force approach (`GpuSimple`) and CPU space par
 
 Of course, this last comparison is a bit unfair since my GPU is relatively low-performance, and I'm comparing brute-force and space partitioning structures, but as I mentioned before the GPU version is there only to verify that I can integrate GPU simulation execution into the system seamlessly, and obviously there's still work to be done on that front.
 
-Also an interesting thing to see on GPU is whet the effect is when iterating through agents using linked lists (indirect) and just assuming they are consecutive in an array (direct):
+Also an interesting thing to see on GPU is what the effect is when iterating through agents using linked lists (indirect) and just assuming they are consecutive in an array (direct):
 
 ![plot6](/plot6.png)
 
-(Telemetry)
-(average numbers of interactions)
-(thread stats)
+### Efficiency
+
+Efficiency of a simulation can be measured using two numbers. First number tells us how good our space partitioning is regarding minimizing the number of agent pairs that are rejected at the narrow phase test. The following plot shows the ratio between number of agent pairs that should *actually* interact and number of agent pairs that the structure claims *could* interact (higher is better):
+
+![plot7](/plot7.png)
+
+Second number tells us how well the interaction work is distributed among threads, and is presented in the plot below as a mean relative deviation of the number of interactions executed on each thread vs. what would be the ideal distribution (equal number of interactions on each thread), averaged over all simulation steps (lower is better):
+
+![plot8](/plot8.png)

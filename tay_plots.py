@@ -5,18 +5,22 @@ import numpy as np
 plt.style.use('seaborn-whitegrid')
 
 
-data_filename = 'plot_111'
+value_index = 0
+# value_label = "Milliseconds per step"
+# value_label = "Narrow/broad phase ratio (%)"
+value_label = "Mean relative deviation (%)"
+data_filename = 'plot_uniform_telemetry'
 plot_see_radii = [
     0,
     1,
     2,
 ]
 plot_structures = [
-    # 'CpuSimple',
-    # 'CpuTree',
-    # 'CpuGrid',
-    'GpuSimple (direct)',
-    'GpuSimple (indirect)',
+    'CpuSimple',
+    'CpuTree',
+    'CpuGrid',
+    # 'GpuSimple (direct)',
+    # 'GpuSimple (indirect)',
 ]
 
 def _format_and_label(label, radius):
@@ -43,7 +47,14 @@ fig = plt.figure(figsize=(8, 3.5))
 ax = plt.axes()
 
 plt.xlabel("Depth correction")
-plt.ylabel("Milliseconds per step")
+plt.ylabel(value_label)
+
+def _number_from_token(token, index):
+    bits = token.split('|')
+    if index >= len(bits):
+        return float(bits[0])
+    else:
+        return float(bits[index])
 
 with open('../tay/benchmark/%s' % data_filename, 'r') as file:
     text = file.read()
@@ -66,10 +77,10 @@ with open('../tay/benchmark/%s' % data_filename, 'r') as file:
         if radius not in plot_see_radii:
             continue
         if len(tokens) == 2:
-            n = float(tokens[1])
+            n = _number_from_token(tokens[1], value_index)
             y_vals = [n for _ in x_vals]
         else:
-            y_vals = [float(n) for n in tokens[1:]]
+            y_vals = [_number_from_token(n, value_index) for n in tokens[1:]]
         c, f, l = _format_and_label(label, radius)
         plt.plot(x_vals, y_vals, f, color=c, label=l)
 
