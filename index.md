@@ -1,3 +1,3 @@
 # Branimir Čače
 
-## [Efficient agent-based system simulation](tay.md)
+## [Comparison of space partitioning structures in agent-based simulations](tay.md)
