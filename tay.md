@@ -83,7 +83,7 @@ Currently all partitioning structures are completely rebuilt at the start of eac
 
 `CpuGrid` structure is a hash grid. Hash function used to map grid cell indices to bin indices is a simple XOR hash function.
 
-**Update:** Space bounding box and suggested partition sizes are used to convert each agent's position into grid cell indices, which are then hashed to find the appropriate bin for the agent. All non-empty bins are linked into a list for faster access.
+**Update:** Space bounding box and suggested partition sizes are used to convert each agent's position into grid cell indices, which are then hashed to find the appropriate bin for each agent. All non-empty bins are linked into a list for faster access.
 
 **Act:** Each thread iterates through its assigned bins so that each bin's agents get processed by one of the threads.
 
@@ -93,13 +93,15 @@ To find neighboring **seen** bins, **seer** agent's cell indices are calculated 
 
 Hash collisions also have to be taken into account when looking at kernel **seen** bins. One problem is that kernel **seen** bins can also contain agents from multiple cells, and some of those cells obviously might be outside the kernel. Simplest solution is to ignore the problem and just let those agents get rejected during the narrow phase (then it becomes a problem of reducing the number of collisions, which we have to do anyway). The other problem is that a hash collision could cause the same bin to appear multiple times in the same kernel. The fix for that is to mark bins as already visited and skip them on subsequent encounters.
 
+(thread balancing)
+
 ## Results
 
 So finally we come to the point of the project - comparison of space partitioning structures. Here I run a series of simulations where I apply each structure to a test model (and its variants), and then tweak the structure to see if there's a setting where it performs better than others for the given model.
 
 Since focus is on optimizing spatial agent interactions the model I used is a very abstracted version of flocking. To make agent spatial distribution consistent during simulation runs (and therefore number of interactions), agent movement is predefined (it doesn't depend on agent interactions). To verify that the simulation is running correctly there is a separate `f_buffer` variable that gets updated at each step by the agent's interactions with other agents. I compare values of `f_buffer` variables between simulation runs to make sure that all simulations of the same model run exactly the same, regardless of any differences between how those simulation were run, on which hardware they were run, and which structures were used.
 
-Variables in these experiments can be grouped into model variables and system variables. Model variables are the number of agents in the model, agent distribution in space (density and "clumpiness"), interaction radii, and how demanding the interaction code is. System variables are the number of threads the simulation is running on, the space partitioning structure used (including whether it's a CPU or GPU structure), `depth_correction` (where applicable), and any structure-specific settings like `GpuSimple` structure's `direct` setting or hash table size dictated by the available memory for the `CpuGrid` structure.
+Variables in these experiments can be grouped into model variables and system variables. Model variables are the number of agents in the model, agent distribution in space (density and "clumpiness"), interaction radii, and how demanding the interaction code is. System variables are the number of threads the simulation is running on, the space partitioning structure used (including whether it's a CPU or a GPU structure), `depth_correction` (where applicable), and any structure-specific settings like `GpuSimple` structure's `direct` setting or hash table size dictated by the available memory for the `CpuGrid` structure.
 
 So far I only had the chance to run simulations on my ThinkPad T480 with the i5-8250U processor (4 physical and 8 logical processors, base frequency 1.6 Ghz, max. frequency 3.4 GHz (Turbo Boost)) and UHD Graphics 620 (I used Intel's OpenCL SDK for GPU simulations). GPU results are just there to verify that the system works correctly, with consistent simulation results, even when switching between CPU and GPU strucures during simulation runs.
 

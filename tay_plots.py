@@ -1,18 +1,16 @@
+import matplotlib.ticker as mticker
 import matplotlib.pyplot as plt
 import numpy as np
-import matplotlib.ticker as mticker
-
 
 plt.style.use('seaborn-whitegrid')
 
-fig = plt.figure()
-ax = plt.axes()
-
-plt.xlabel("Depth correction")
-plt.ylabel("Milliseconds per step")
 
 data_filename = 'plot_111'
-plot_see_radii = [0, 1, 2]
+plot_see_radii = [
+    0,
+    1,
+    2,
+]
 plot_structures = [
     # 'CpuSimple',
     'CpuTree',
@@ -20,7 +18,6 @@ plot_structures = [
     # 'GpuSimple (direct)',
     # 'GpuSimple (indirect)',
 ]
-
 
 def _format_and_label(label, radius):
     if label == 'CpuSimple':
@@ -43,6 +40,11 @@ def _format_and_label(label, radius):
         style = ':'
     return color, style, '%s R:%g' % (label, pow(2, radius) * 50.0)
 
+fig = plt.figure()
+ax = plt.axes()
+
+plt.xlabel("Depth correction")
+plt.ylabel("Milliseconds per step")
 
 with open('../tay/benchmark/%s' % data_filename, 'r') as file:
     text = file.read()
@@ -78,6 +80,5 @@ plt.gca().xaxis.set_major_locator(mticker.MultipleLocator(1))
 plt.legend(bbox_to_anchor=(1, 1), loc="upper left");
 plt.tight_layout()
 plt.show()
-
 
 fig.savefig('%s.png' % data_filename)
