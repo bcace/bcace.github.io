@@ -1,52 +1,41 @@
 
 ## Comparison of space partitioning structures in agent-based simulations
 
-A number of years ago I was working on [Ochre](https://github.com/bcace/ochre) - agent-based modeling and simulation tool, and I focused mostly on achieving immediate connection between model modification and simulation, and creating a language in which non-programmers could safely write parallel agent interaction code without fear of data races or race conditions. While simulation performance was decent, at a certain scale simulations would slow down enough to break the immediacy of model development, and it was obvious that there isn't a single most efficient simulation mechanism for all the different models that users might want to develop.
+A number of years ago I was working on [Ochre](https://github.com/bcace/ochre) - agent-based modeling and simulation tool. At the time I focused mostly on achieving immediate connection between modifying the model and running the simulation. Additionally, I wanted to create a language in which non-programmers could safely write parallel agent interaction code without fear of data races or race conditions. While simulation performance was solid, at a certain scale it would slow down enough to break the immediacy of model development, and it was obvious that there isn't a single most efficient simulation mechanism for all the different models that users might want to develop.
 
-The biggest cause of slowdowns in agent-based simulations is the number of interactions that can occur between agents. If it's known in advance which agents will interact (connections between agents exist as separate entities, agents have direct references to other agents, or *all* agents have to interact) then the only thing to do is parallelize execution of those interactions. If the decision whether agents should interact is made based on their proximity ([flocking](https://en.wikipedia.org/wiki/Flocking_(behavior)) is a good example) then there's potential for optimization by using [space partitioning structures](https://en.wikipedia.org/wiki/Space_partitioning). These structures provide rough information on which agents are so far apart that they have no chance of interacting (broad phase), and which agents *might* interact. Each of the remaining pairs of agents that might interact we have to test for distance explicitly (narrow phase).
+A common cause of slowdowns in agent-based simulations is the number of interactions that can occur between agents. If the decision whether agents should interact is made based on their proximity ([flocking](https://en.wikipedia.org/wiki/Flocking_(behavior)) is a good example) then there is potential for optimization by using [space partitioning structures](https://en.wikipedia.org/wiki/Space_partitioning). These structures provide rough information on which agents are so far apart that they have no chance of interacting (**broad phase**), and which agents *might* interact. Each of the remaining pairs of agents that might interact we have to test for distance explicitly (**narrow phase**).
 
-As an example of why we need space partitioning let's look at some simple numbers. If there's a 1000 agents in a model and they all have to interact, that's 999000 interactions at each step. If we now want to limit agents to only interact if they're close enough to each other, and it turns out that for the given interaction range agents on average come close enough to 10 other agents at each step, that's 10000 actual interactions. But in order to test whether agents should interact at all we still had to go through all 999000 pairs, which means we just wasted time on 989000 tests. We use pace partitioning structures to reduce this number. At that point optimizing the chosen structure generally means:
+> Example for space partitioning: if there's a 1000 agents in a model and they all have to interact, that's 999000 interactions at each step. If we now want to limit agents to only interact if they're close enough to each other, and it turns out that for the given interaction range agents on average come close enough to 10 other agents at each step, that's 10000 actual interactions. But in order to test whether agents should interact at all we still had to go through all 999000 pairs, which means we just wasted time on 989000 tests.
 
-* minimizing the number of agent pairs that pass the broad phase and get rejected in the narrow phase,
-* minimizing time required to build/maintain the structure,
-* minimizing time required to traverse the structure and find neighboring partitions,
-* parallelizing both building and using the structure.
+In short, we use space partitioning structures to reduce the number of pairs of agents that fail the narrow phase test. That means that making a simulation run efficiently we have to:
+
+* minimize the number of agent pairs that pass the broad phase and get rejected in the narrow phase,
+* minimize time required to update and use the structure to find neighbors,
+* distribute workload equally among threads,
+
+which gives us three very specific numbers with which we can evaluate a simulation system and compare space partitioning structures independent from other influences such as the hardware we're using, or how optimized the agent behavior code is.
 
 ## Tay
 
 I wrote [Tay](https://github.com/bcace/tay) as a collection of space partitioning structures to explore how they perform in different conditions. The goal is to have multiple different test models and run simulations with different structures, on different numbers of threads and both on CPU and GPU, and compare run-times. Since agent properties, behavior and distribution in space can change during a single simulation run so much that it completely changes which structure is optimal, Tay allows switching between structures during a simulation run (even switching between CPU and GPU), changing the number of threads (on CPU) and adjusting any parameters each structure might have. Since conclusions derived from these experiments should be applicable to a wide variety of agent-based models, the following requirements should be met:
 
-##### Space dimensions
+**Space dimensions:** Currently space can have 1, 2, 3 or 4 dimensions, and those dimensions can be of any type, not just spatial. The fact that dimensions don't have to be of the same type means that space partitioning structures treat each dimension separately. For example, when defining an interaction between agents we cannot just define one range value to which the interaction is limited, we have to specify a separate value for each dimension.
 
-Currently space can have 1, 2, 3 or 4 dimensions, and those dimensions can be of any type, not just spatial. The fact that dimensions don't have to be of the same type means that space partitioning structures treat each dimension separately. For example, when defining an interaction between agents we cannot just define one range value to which the interaction is limited, we have to specify a separate value for each dimension.
+**Agent size:** Agents can have size in any dimension (don't have to be points). This can complicate space partitioning structures somewhat. If it's a tree structure there's a possibility to add agents to non-leaf nodes. If it's a grid structure then the same agent can be added to multiple partitions in which case we have to prevent multiple interactions between same agents, or we can build a "fake" tree from multiple grids of varying partition sizes.
 
-##### Agent size
+**Space bounds:** Space doesn't have fixed bounds, agents are free to move anywhere, and it's up to the space partitioning structure to update itself correctly.
 
-Agents can have size in any dimension (don't have to be points). This can complicate space partitioning structures somewhat. If it's a tree structure there's a possibility to add agents to non-leaf nodes. If it's a grid structure then the same agent can be added to multiple partitions in which case we have to prevent multiple interactions between same agents, or we can build a "fake" tree from multiple grids of varying partition sizes.
+**Agent types:** Multiple agent types can be defined. This allows having agents with drastically different behaviors in a single model.
 
-##### Space bounds
-
-Space doesn't have fixed bounds, agents are free to move anywhere, and it's up to the space partitioning structure to update itself correctly.
-
-##### Agent types
-
-Multiple agent types can be defined. This allows having agents with drastically different behaviors in a single model.
-
-##### Behaviors and interactions
-
-To avoid data races and race conditions agent behavior code is split into an arbitrary number of *passes*. There are currently only two types of passes: **act** and **see**.
+**Behaviors and interactions:** To avoid data races and race conditions agent behavior code is split into an arbitrary number of *passes*. There are currently only two types of passes: **act** and **see**.
 
 **act** pass describes what each agent does with its own data, there is no communication with other agents. This pass is defined for a specific agent type and specifies a procedure that is applied to all "live" agents of that type.
 
 **see** pass describes how two agents interact, the **seer** agent and the **seen** agent. This strict role assignment for these two agents is what enables lock-free parallelism: knowing that the **seer** agent can change its state and the **seen** agent is read-only enables scheduling **see** code execution so that a **seer** agent is never in more than one thread during this pass. **see** pass is defined for two agent groups: **seer** agent type and **seen** agent type, and specifies a procedure that is applied to all agent pairs the space partitioning structure decides should interact.
 
-##### Communication methods
+**Communication methods:** Communication methods can be combined: communicating with neighbors within specified range(s), through direct references, connection objects or a [grid](https://en.wikipedia.org/wiki/Particle_Mesh). Currently agents only interact with neighbors, but I took special care to not preclude any of the other mechanisms from being added.
 
-Communication methods can be combined: communicating with neighbors within specified range(s), through direct references, connection objects or a [grid](https://en.wikipedia.org/wiki/Particle_Mesh). Currently agents only interact with neighbors, but I took special care to not preclude any of the other mechanisms from being added.
-
-##### Adding/removing agents
-
-Agents can be removed from or added to a running simulation. This requires certain provisions in the space partitioning structures, depending on the model itself and the chosen method for efficiently iterating through agents. The options are roughly:
+**Adding/removing agents:** Agents can be removed from or added to a running simulation. This requires certain provisions in the space partitioning structures, depending on the model itself and the chosen method for efficiently iterating through agents. The options are roughly:
 
 1. **Connecting agents into linked lists** requires embedding `next` pointers into agents themselves, and the same pointers can be used to group agents into partitions.
 2. **Marking "dead" agents** and skipping them, with an occasional "defragmentation" step. The "defragmentation" step where agents would be moved in memory would require that all references to agents from connection objects or other agents are updated as well. This makes this option either more complicated (and potentially lose any performance gains over option 1.) or limited only to use in models where there are no agent references.
