@@ -5,17 +5,15 @@ A number of years ago I was working on [Ochre](https://github.com/bcace/ochre) -
 
 A common cause of slowdowns in agent-based simulations is the number of interactions that can occur between agents. If the decision whether agents should interact is made based on their proximity ([flocking](https://en.wikipedia.org/wiki/Flocking_(behavior)) is a good example) then there is potential for optimization by using [space partitioning structures](https://en.wikipedia.org/wiki/Space_partitioning). These structures provide rough information on which agents are so far apart that they have no chance of interacting (**broad phase**), and which agents *might* interact. Each of the remaining pairs of agents that might interact we have to test for distance explicitly (**narrow phase**).
 
-> Example for space partitioning: if there's a 1000 agents in a model and they all have to interact, that's 999000 interactions at each step. If we now want to limit agents to only interact if they're close enough to each other, and it turns out that for the given interaction range agents on average come close enough to 10 other agents at each step, that's 10000 actual interactions. But in order to test whether agents should interact at all we still had to go through all 999000 pairs, which means we just wasted time on 989000 tests.
+> Example for space partitioning: if there's a 1000 agents in a model and they all have to interact, that's 999000 interactions at each step. If we now want to limit agents to only interact if they're close enough to each other, and let's say that for a given interaction range agents on average come close enough to 10 other agents at each step, that's 10000 actual interactions. But in order to test whether agents should interact at all we still had to go through all 999000 pairs, which means we just wasted time on 989000 tests.
 
-In short, we use space partitioning structures to reduce the number of pairs of agents that fail the narrow phase test. That means that making a simulation run efficiently we have to:
+To evaluate a simulation system setup and compare space partitioning structures it's not enough to just look at resulting simulation run-times, since they include various influences such as the hardware we're running simulations on, or how performant the agent behavior code is. To isolate the performance of the system itself we can look at the following numbers:
 
-* minimize the number of agent pairs that pass the broad phase and get rejected in the narrow phase,
-* minimize time required to update and use the structure to find neighbors,
-* distribute workload equally among threads,
+* number of agent pairs that pass the broad phase and get rejected in the narrow phase,
+* time required to update and use the structure to find neighbors,
+* how well the workload is distributed among threads.
 
-which gives us three very specific numbers with which we can evaluate a simulation system and compare space partitioning structures independent from other influences such as the hardware we're using, or how optimized the agent behavior code is.
-
-## Tay
+## Tay library
 
 I wrote [Tay](https://github.com/bcace/tay) as a collection of space partitioning structures to explore how they perform in different conditions. The goal is to have multiple different test models and run simulations with different structures, on different numbers of threads and both on CPU and GPU, and compare run-times. Since agent properties, behavior and distribution in space can change during a single simulation run so much that it completely changes which structure is optimal, Tay allows switching between structures during a simulation run (even switching between CPU and GPU), changing the number of threads (on CPU) and adjusting any parameters each structure might have. Since conclusions derived from these experiments should be applicable to a wide variety of agent-based models, the following requirements should be met:
 
