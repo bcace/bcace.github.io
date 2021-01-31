@@ -110,6 +110,12 @@ So far I only had the chance to run simulations on my ThinkPad T480 with the i5-
 **Space size**|1000 * 1000 * 1000
 **Threads (CPU)**|8
 
+Simulation workload is best measured in number of interactions each agent has during a simulation step, and for the same number of agents, distribution and space size it depends only on the interaction radii. Obviously these numbers are exactly the same regardless of structure used:
+
+**50**|9.2973
+**100**|68.6986
+**200**|466.351
+
 #### Simulation run-times
 
 First, to show the benefits of using partitioning structures, here's a comparison of simulation run-times of the brute-force approach (`CpuSimple`) and partitioning structures (`CpuGrid`) for the case when interaction radius is 50:
