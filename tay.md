@@ -90,6 +90,8 @@ Variables in these experiments can be grouped into model variables and system va
 
 So far I only had the chance to run simulations on my ThinkPad T480 with the i5-8250U processor (4 physical and 8 logical processors, base frequency 1.6 Ghz, max. frequency 3.4 GHz (Turbo Boost)) and UHD Graphics 620 (I used Intel's OpenCL SDK for GPU simulations). GPU results are just there to verify that the system works correctly, with consistent simulation results, even when switching between CPU and GPU strucures during simulation runs.
 
+Most results are for uniform distribution of agents moving in random directions inside a fixed cube. Currently the only other distribution is one-clump: 80% of agents uniformly distributed and 20% clumped inside a cube whose side is 5% of the entire space cube's side length.
+
 > Note that the following run-times are not the fastest I can get on my machine. I disabled Turbo Boost to get more consistent results, but with it enabled (which is the default) I get 1.5 - 2 times better run-times.
 
 **Agents**|10000
@@ -121,7 +123,11 @@ Comparing `CpuTree` and `CpuGrid` we can see that grids perform better for all t
 
 ![plot4](/plot4.png)
 
-Finally, when comparing GPU brute-force approach (`GpuSimple`) and CPU space partitioning structures (`CpuTree` and `CpuGrid`) we can see that for smaller interaction radii CPU version is still faster:
+Simulations with uniform (green) perform better than one-clump (blue) distributions because agents in the "clump" are all so close together that they must always interact:
+
+![plot9](/plot9.png)
+
+Finally, when comparing GPU brute-force approach (`GpuSimple`) and a CPU space partitioning structure (`CpuGrid`) we can see that for smaller interaction radii CPU version is still faster:
 
 ![plot5](/plot5.png)
 
@@ -133,10 +139,14 @@ Also an interesting thing to see on GPU is what the effect is when iterating thr
 
 #### Simulation efficiency
 
-Efficiency of a simulation can be measured using two numbers. First number tells us how good our space partitioning is regarding minimizing the number of agent pairs that are rejected at the narrow phase test. The following plot shows the ratio between number of agent pairs that should *actually* interact and number of agent pairs that the structure claims *could* interact (higher is better):
+As mentioned at the beginning, efficiency of a simulation can be measured with three numbers. First number tells us how good our space partitioning is regarding the number of agent pairs that are rejected at the narrow phase test. The following plot shows the ratio between number of agent pairs that should *actually* interact and number of agent pairs that the structure claims *could* interact (higher is better):
 
 ![plot7](/plot7.png)
 
-Second number tells us how well the interaction work is distributed among threads, and is presented in the plot below as a mean relative deviation of the number of interactions executed on each thread vs. what would be the ideal distribution (equal number of interactions on each thread), averaged over all simulation steps (lower is better):
+Third number, or thread unbalancing, tells us how well the interaction work is distributed among threads, and is presented in the plot below as a mean relative deviation of the number of interactions executed on each thread vs. what would be the ideal distribution (equal number of interactions on each thread), averaged over all simulation steps (lower is better):
 
 ![plot8](/plot8.png)
+
+For the uniform distribution (green) thread unbalancing is small and dropping off because many small cells with few agents each are easier to distribute evenly among threads than few large cells with many agents each. For the one-clump distribution (blue) the same effect is visible at larger depth corrections, but at smaller depth corrections and large interaction radii all partitions have the clump of agents as their neighbor. This means the amount of work will be the same for all of them, which makes the balancing easy:
+
+![plot10](/plot10.png)

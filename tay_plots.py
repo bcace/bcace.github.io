@@ -5,17 +5,29 @@ import numpy as np
 plt.style.use('seaborn-whitegrid')
 
 
-def _format_and_label(label, radius, all_lines):
-    if label == 'CpuSimple':
-        color = '#444444'
-    elif label == 'CpuTree':
-        color = '#00aa00'
-    elif label == 'CpuGrid':
-        color = '#55ff22'
-    elif label == 'GpuSimple (direct)':
-        color = '#ff9933'
+def _format_and_label(label, radius, all_lines, dataset):
+    if dataset == 0:
+        if label == 'CpuSimple':
+            color = '#444444'
+        elif label == 'CpuTree':
+            color = '#00aa00'
+        elif label == 'CpuGrid':
+            color = '#55ff22'
+        elif label == 'GpuSimple (direct)':
+            color = '#ff9933'
+        else:
+            color = '#ee0000'
     else:
-        color = '#ee0000'
+        if label == 'CpuSimple':
+            color = '#444444'
+        elif label == 'CpuTree':
+            color = '#0022ff'
+        elif label == 'CpuGrid':
+            color = '#55aaff'
+        elif label == 'GpuSimple (direct)':
+            color = '#ff9933'
+        else:
+            color = '#ee0000'
     if all_lines:
         style = '-'
     else:
@@ -36,7 +48,7 @@ def _number_from_token(token, index):
         return float(bits[index])
 
 
-def _create_plots_from_file(in_filename, out_filename, value_index, value_label, plot_see_radii, plot_structures, all_lines):
+def _create_plots_from_file(in_filename, out_filename, value_index, value_label, plot_see_radii, plot_structures, all_lines, dataset):
     with open('../tay/benchmark/%s' % in_filename, 'r') as file:
         text = file.read()
         lines = text.splitlines()
@@ -62,7 +74,7 @@ def _create_plots_from_file(in_filename, out_filename, value_index, value_label,
                 y_vals = [n for _ in x_vals]
             else:
                 y_vals = [_number_from_token(n, value_index) for n in tokens[1:]]
-            c, f, l = _format_and_label(label, radius, all_lines)
+            c, f, l = _format_and_label(label, radius, all_lines, dataset)
             plt.plot(x_vals, y_vals, f, color=c, label=l)
 
 
@@ -73,6 +85,7 @@ def _create_figure(out_filename, in_filenames, value_index, value_label, plot_se
     plt.xlabel("Depth correction")
     plt.ylabel(value_label)
 
+    dataset = 0
     for in_filename in in_filenames:
         _create_plots_from_file(in_filename,
                                 out_filename=out_filename,
@@ -80,7 +93,9 @@ def _create_figure(out_filename, in_filenames, value_index, value_label, plot_se
                                 value_label=value_label,
                                 plot_see_radii=plot_see_radii,
                                 plot_structures=plot_structures,
-                                all_lines=all_lines)
+                                all_lines=all_lines,
+                                dataset=dataset)
+        dataset += 1
 
     if ylim is not None:
         plt.ylim([0, ylim])
@@ -88,15 +103,18 @@ def _create_figure(out_filename, in_filenames, value_index, value_label, plot_se
     plt.gca().xaxis.set_major_locator(mticker.MultipleLocator(1))
     plt.legend(bbox_to_anchor=(1, 1), loc="upper left");
     plt.tight_layout()
-    # plt.show()
-    fig.savefig('%s.png' % out_filename)
+    plt.show()
+    # fig.savefig('%s.png' % out_filename)
 
 
-_create_figure('plot1', ['plot_uniform_runtimes'], 0, 'Milliseconds per step', [0], ['CpuSimple', 'CpuGrid'], None, False)
-_create_figure('plot2', ['plot_uniform_runtimes'], 0, 'Milliseconds per step', [2], ['CpuSimple', 'CpuGrid'], None, True)
-_create_figure('plot3', ['plot_uniform_runtimes'], 0, 'Milliseconds per step', [0, 1, 2], ['CpuTree'], 300, False)
-_create_figure('plot4', ['plot_uniform_runtimes'], 0, 'Milliseconds per step', [0, 1, 2], ['CpuTree', 'CpuGrid'], 100, False)
-_create_figure('plot5', ['plot_uniform_runtimes'], 0, 'Milliseconds per step', [0, 1, 2], ['CpuTree', 'CpuGrid', 'GpuSimple (direct)'], 100, False)
-_create_figure('plot6', ['plot_uniform_runtimes'], 0, 'Milliseconds per step', [0, 1, 2], ['GpuSimple (direct)', 'GpuSimple (indirect)'], None, False)
-_create_figure('plot7', ['plot_uniform_telemetry'], 3, 'Narrow / broad phase ratio (%)', [0, 1, 2], ['CpuSimple', 'CpuTree', 'CpuGrid'], None, False)
-_create_figure('plot8', ['plot_uniform_telemetry'], 0, 'Mean relative deviation (%)', [0, 1, 2], ['CpuSimple', 'CpuTree', 'CpuGrid'], None, False)
+# _create_figure('plot1', ['plot_uniform_runtimes'], 0, 'Milliseconds per step', [0], ['CpuSimple', 'CpuGrid'], None, False)
+# _create_figure('plot2', ['plot_uniform_runtimes'], 0, 'Milliseconds per step', [2], ['CpuSimple', 'CpuGrid'], None, True)
+# _create_figure('plot3', ['plot_uniform_runtimes'], 0, 'Milliseconds per step', [0, 1, 2], ['CpuTree'], 300, False)
+# _create_figure('plot4', ['plot_uniform_runtimes'], 0, 'Milliseconds per step', [0, 1, 2], ['CpuTree', 'CpuGrid'], 100, False)
+# _create_figure('plot5', ['plot_uniform_runtimes'], 0, 'Milliseconds per step', [0, 1, 2], ['CpuGrid', 'GpuSimple (direct)'], 100, False)
+# _create_figure('plot6', ['plot_uniform_runtimes'], 0, 'Milliseconds per step', [0, 1, 2], ['GpuSimple (direct)', 'GpuSimple (indirect)'], None, False)
+# _create_figure('plot7', ['plot_uniform_telemetry'], 3, 'Narrow / broad phase ratio (%)', [0, 1, 2], ['CpuSimple', 'CpuTree', 'CpuGrid'], None, False)
+# _create_figure('plot8', ['plot_uniform_telemetry'], 0, 'Thread unbalancing (%)', [0, 1, 2], ['CpuSimple', 'CpuTree', 'CpuGrid'], None, False)
+
+# _create_figure('plot9', ['plot_uniform_runtimes', 'plot_clump_runtimes'], 0, 'Milliseconds per step', [0], ['CpuGrid', 'CpuTree'], None, False)
+# _create_figure('plot10', ['plot_uniform_telemetry', 'plot_clump_telemetry'], 0, 'Thread unbalancing (%)', [0, 1, 2], ['CpuGrid'], None, False)
