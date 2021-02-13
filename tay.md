@@ -7,8 +7,6 @@ A common cause of slowdowns in agent-based simulations is the number of interact
 
 > Example for space partitioning: if there's a 1000 agents in a model and they all have to interact, that's 999000 interactions at each step. If we now want to limit agents to only interact if they're close enough to each other, and let's say that for a given interaction range agents on average come close enough to 10 other agents at each step, that's 10000 actual interactions. But in order to test whether agents should interact at all we still had to go through all 999000 pairs, which means we just wasted time on 989000 tests.
 
-<iframe width="800" height="400" src="https://www.youtube.com/embed/DD93xIQqz5s" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-
 To evaluate a simulation system setup and compare space partitioning structures it's not enough to just look at resulting simulation run-times, since they include various influences such as the hardware we're running simulations on, or how performant the agent behavior code is. To isolate the performance of the system itself we can look at the following numbers:
 
 * number of agent pairs that pass the broad phase and get rejected in the narrow phase,
@@ -152,3 +150,19 @@ Third number, or thread unbalancing, tells us how well the interaction work is d
 For the uniform distribution (green) thread unbalancing is small and dropping off because many small cells with few agents each are easier to distribute evenly among threads than few large cells with many agents each. For the one-clump distribution (blue) the same effect is visible at larger depth corrections, but at smaller depth corrections and large interaction radii all partitions have the clump of agents as their neighbor. This means the amount of work will be the same for all of them, which makes the balancing easy:
 
 ![plot10](/plot10.png)
+
+## Application
+
+Currently I'm using Tay only for a flocking simulation which can be seen [here](https://www.youtube.com/watch?v=DD93xIQqz5s). The video shows a simple flocking simulation with 30000 boids, running at around 30 ms per simulation step on the same configuration as the above benchmarks, using the `CpuGrid` structure. I'm hoping to add things like terrain and other, non-point moving agents that would require multiple different structures to be used and updated at different rates, all working together for an efficient simulation.
+
+## Still to do
+
+* Automatic adjustment of `depth_correction`.
+* Support for non-point agents in the `CpuTree` structure.
+* Combining multiple structures in a single simulation.
+* More control over when structures get updated.
+* Efficient communication through references or connections.
+* Efficient communication through particle grids.
+* Implement and benchmark the new `CpuAABBTree` structure.
+* Implement thread balancing for the `CpuTree` structure.
+* Add a simple samplig profiler to measure time spent updating and using structures.
