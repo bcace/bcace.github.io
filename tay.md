@@ -7,7 +7,7 @@ A common cause of slowdowns in agent-based simulations is the number of interact
 
 > Example for space partitioning: if there's a 1000 agents in a model and they all have to interact, that's 999000 interactions at each step. If we now want to limit agents to only interact if they're close enough to each other, and let's say that for a given interaction range agents on average come close enough to 10 other agents at each step, that's 10000 actual interactions. But in order to test whether agents should interact at all we still had to go through all 999000 pairs, which means we just wasted time on 989000 tests.
 
-<iframe width="800" height="400" src="https://www.youtube.com/watch?v=DD93xIQqz5s" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+[![](https://img.youtube.com/vi/DD93xIQqz5s/0.jpg)](https://www.youtube.com/watch?v=DD93xIQqz5s "Flocking")
 
 To evaluate a simulation system setup and compare space partitioning structures it's not enough to just look at resulting simulation run-times, since they include various influences such as the hardware we're running simulations on, or how performant the agent behavior code is. To isolate the performance of the system itself we can look at the following numbers:
 
