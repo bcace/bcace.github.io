@@ -153,9 +153,11 @@ For the uniform distribution (green) thread unbalancing is small and dropping of
 
 ## Application
 
-Currently I'm using Tay only for a flocking simulation which can be seen [here](https://www.youtube.com/watch?v=DD93xIQqz5s). The video shows a simple flocking simulation with 30000 boids, running at around 30 ms per simulation step on the same configuration as the above benchmarks, using the `CpuGrid` structure. I'm hoping to add things like terrain and other, non-point moving agents that would require multiple different structures to be used and updated at different rates, all working together for an efficient simulation.
+In addition to the benchmarks, you can see Tay in action [here](https://www.youtube.com/watch?v=DD93xIQqz5s). The video shows a simple flocking simulation with 30000 boids, running at around 30 ms per simulation step on the same configuration as the benchmarks, using the `CpuGrid` structure. I'm hoping to add things like terrain and other, non-point moving agents that would require multiple different structures to be used and updated at different rates, all working together for an efficient simulation.
 
-## Still to do
+## What's next
+
+Currently I use Tay as a vehicle to better understand what's necessary and what's possible for efficient agent-based simulation. In future, through its application in more complex an demanding simulations, I would like to develop it into a library that could be used for any simulation and, more importantly, easily configured for optimal simulation running. These are some of the more significant things to do in that direction:
 
 * Automatic adjustment of `depth_correction`.
 * Support for non-point agents in the `CpuTree` structure.
