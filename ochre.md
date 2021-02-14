@@ -87,7 +87,7 @@ Even collections can work as accumulators if we control how they're updated and 
 
 ## Concurrency safety in Ochre
 
-Ochre is an agent-based modeling and simulation tool that I wrote back in 2013., and it included a language that ensures concurrency safety with a set of high-level rules based on double-buffering and accumulation. These rules should be easy to learn and apply while still being flexible enough for expressing various forms of agent interactions.
+[Ochre](https://github.com/bcace/ochre) is an agent-based modeling and simulation tool that I wrote back in 2013., and it included a language that ensures concurrency safety with a set of high-level rules based on double-buffering and accumulation. These rules should be easy to learn and apply while still being flexible enough for expressing various forms of agent interactions.
 
 For semantic analysis based on these rules the following information must be known:
 

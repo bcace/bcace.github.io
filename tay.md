@@ -168,4 +168,4 @@ Currently I use Tay as a vehicle to better understand what's necessary and what'
 * Efficient communication through particle grids.
 * Implement and benchmark the new `CpuAABBTree` structure.
 * Implement thread balancing for the `CpuTree` structure.
-* Add a simple samplig profiler to measure time spent updating and using structures.
+* Add a simple sampling profiler to measure time spent updating and using structures.
