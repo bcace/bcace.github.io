@@ -1,4 +1,4 @@
-# Comparison of space partitioning structures in agent-based simulations
+## Comparison of space partitioning structures in agent-based simulations
 
 A number of years ago I was working on [Ochre](https://github.com/bcace/ochre) - agent-based modeling and simulation tool. At the time I focused mostly on achieving immediate connection between modifying the model and running the simulation. Additionally, I wanted to create a language in which non-programmers could safely write parallel agent interaction code without fear of data races or race conditions. While simulation performance was solid, at a certain scale it would slow down enough to break the immediacy of model development, and it was obvious that there isn't a single most efficient simulation mechanism for all the different models that users might want to develop.
 
