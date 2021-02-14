@@ -60,21 +60,21 @@ Currently all partitioning structures are completely rebuilt at the start of eac
 
 `CpuTree` structure is a k-d tree. Can store agents that have size (are not points) in non-leaf nodes.
 
-**Update:** At the start of each simulation step tree is cleared so that it only contains the root partition, and the root partition's bounding box is updated to enclose all agents. When adding an agent to the tree the the appropriate branch is traversed as far as possible and when further partitioning is needed partitions are split in half along a dimension with largest ratio between partition size in that dimension and smallest partition size in the same dimension.
+**Tree update:** At the start of each simulation step tree is cleared so that it only contains the root partition, and the root partition's bounding box is updated to enclose all agents. When adding an agent to the tree the the appropriate branch is traversed as far as possible and when further partitioning is needed partitions are split in half along a dimension with largest ratio between partition size in that dimension and smallest partition size in the same dimension.
 
-**Act:** All tree partitions are evenly distributed among threads for processing.
+**Act phase:** All tree partitions are evenly distributed among threads for processing.
 
-**See:** All tree partitions are evenly distributed among threads as **seer** partitions, or partitions containing **seer** agents. To get **seen** agents for each of those **seer** partitions, the tree is traversed and each of those partitions' bounding boxes is tested for overlap with the **seer** partition's bounding box inflated by the **see** pass radii. Since no two threads ever have the same **seer** partition there is no danger of writing to the same memory location from multiple threads. All threads process the same partitions for **seen** agents, but **seen** agents are read-only.
+**See phase:** All tree partitions are evenly distributed among threads as **seer** partitions, or partitions containing **seer** agents. To get **seen** agents for each of those **seer** partitions, the tree is traversed and each of those partitions' bounding boxes is tested for overlap with the **seer** partition's bounding box inflated by the **see** pass radii. Since no two threads ever have the same **seer** partition there is no danger of writing to the same memory location from multiple threads. All threads process the same partitions for **seen** agents, but **seen** agents are read-only.
 
 ### Grid
 
 `CpuGrid` structure is a hash grid. Hash function used to map grid cell indices to bin indices is a simple XOR hash function.
 
-**Update:** Space bounding box and suggested partition sizes are used to convert each agent's position into grid cell indices, which are then hashed to find the appropriate bin for each agent. All non-empty bins are linked into a list for faster access.
+**Grid update:** Space bounding box and suggested partition sizes are used to convert each agent's position into grid cell indices, which are then hashed to find the appropriate bin for each agent. All non-empty bins are linked into a list for faster access.
 
-**Act:** Each thread iterates through its assigned bins so that each bin's agents get processed by one of the threads.
+**Act phase:** Each thread iterates through its assigned bins so that each bin's agents get processed by one of the threads.
 
-**See:** Each thread iterates through its set of **seer** bins and finds neighboring **seen** bins through its **seer** agents' positions. Because of hash collisions a single bin can contain agents from multiple grid cells, so in principle we have to find neighboring bins for each **seer** bin agent, but since most bins contain agents of only one cell the algorithm caches found neighboring bins.
+**See phase:** Each thread iterates through its set of **seer** bins and finds neighboring **seen** bins through its **seer** agents' positions. Because of hash collisions a single bin can contain agents from multiple grid cells, so in principle we have to find neighboring bins for each **seer** bin agent, but since most bins contain agents of only one cell the algorithm caches found neighboring bins.
 
 To find neighboring **seen** bins, **seer** agent's cell indices are calculated from its position, then cell sizes and **see** radii are used to build the "kernel" of cells neighboring the **seer** cell, and finally indices of each kernel cell are hashed to find the corresponding bins.
 
@@ -154,6 +154,8 @@ For the uniform distribution (green) thread unbalancing is small and dropping of
 ## Application
 
 In addition to the benchmarks, you can see Tay in action [here](https://www.youtube.com/watch?v=DD93xIQqz5s). The video shows a simple flocking simulation with 30000 boids, running at around 30 ms per simulation step on the same configuration as the benchmarks, using the `CpuGrid` structure. I'm hoping to add things like terrain and other, non-point moving agents that would require multiple different structures to be used and updated at different rates, all working together for an efficient simulation.
+
+Of course, this is not the fastest a flocking simulation can run, the same could be run faster on GPU, and/or instead of interacting directly agents could interact through a particle grid (faster but less accurate). Then there's a few tricks that could be done such as boids communicating only through connections, which is fast, and only updating those connections after a certain number of steps using a regular structure to find new neighbors to connect to. I will work to eventually add all those mechanisms to Tay, but for now this is a good showcase of what can be done with a relatively simple space partitioning structure.
 
 ## What's next
 
