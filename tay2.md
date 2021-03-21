@@ -1,44 +1,46 @@
 # Non-point agents in space partitioning structures (Tay 2)
 
-When trying to develop data structures that help with efficient neighbor-finding, such as various trees and grids, there's a marked difference between agents being point agents (only a location in space) and non-point (cover a section of that space, i.e. have a size in at least one of the space dimensions).
+When developing neighbor-finding data structures there's a significant difference in how point and non-point agents can be handled. Here point agents have no size in any dimension of space, just a location. Non-point agents cover a section of space, i.e. have a non-zero size in at least one of dimensions of space.
 
-The difference is easiest to see in grids. If we have an agent which spans several grid cells, do we reference this agent from just a single grid cell or from all grid cells the agent intersects?
+## Why are non-point agents different?
 
-## What's the problem with non-point agents?
-
-To answer that we have to go back a bit and how partitioning spaces helps finding neighbors in the more simple case of point agents, and try to apply the same on non-point agents. So for point agents the simplest possible case is that we have only a single agent type, and a single interaction radius between all those agents. Then we obviously partition the space so that grid cell size is actually the interaction radius:
+To answer that we have to go back a bit and show how partitioning spaces helps in neighbor-finding for point agents (for simplicity we can look at a grid structure). For point agents the simplest possible case is when we have only one agent type, and one interaction radius between all the agents. The obvious way to partition the space is to make grid cell size the same as the interaction radius (black rectangle is the cell the agent belongs to, red rectangle is the agent's interaction area, and the blue rectangle is the neighbor area determined by the structure):
 
 ![nonpoint1](/nonpoint1.png)
 
-Then neighbor finding simply comes down to selecting a cell and making all the agents in that cell interact with all agents in that cell and all immediately neighboring cells. This works perfectly for point agents, but let's see what happens if we have a non-point agent that happens to be located right on the boundary between two cells.
+Here neighbor-finding is done by selecting a cell (black rectangle) and having all the agents in that cell interact with all agents in that cell and all immediately neighboring cells (blue rectangle). This works great for point agents, but let's see what happens if we have a non-point agent that happens to be located right on the boundary between two cells:
 
 ![nonpoint2](/nonpoint2.png)
 
-First question is to which cell does this agent belong? If we for example say that all non-point agents belong to only one cell, and let's just say that the agent's centroid determines which cell the agent belongs to. This means that the size of the agent suddenly determines how many layers of cells we have to take into account when looking for neighbors of such agents. If all agents are the same size, then this number is constant
+First problem is to determine which cell the agent belongs to. We could say that non-point agents can only belong to one cell, and we could say that the agent's centroid determines the cell. This means that agent size determines how many layers of cells we have to take into account when looking for neighbors of such agents:
 
 ![nonpoint3](/nonpoint3.png)
 
-and we can even just enlarge the cell size to be 2 * agent radius plus interaction radius and go back to only looking for neighbors in the first layer of cells only, which returns us to the same situation we had with point agents.
+If all agents are the same size, then this number is constant: `2 * agent_radius + interaction_radius` and in this case we can even say that this number *is* the cell size, and then we have basically the same situation as with point agents.
 
-If non-point agents are all of different sizes, then it would be impossible to know how many layers we have to take into account, because might know how large each agent from the "seer" cell is, but we also have to know that for all the agents which it has to interact with, which we don't know in advance - this is exactly the thing we're trying to find out.
+If non-point agents have varying sizes, then it becomes impossible to know how many layers we have to take into account. In short, the whole point of space partitioning is to be able to quickly find neighboring partitions. If how many layers of partitions we consider neighboring partitions depends on varying agent sizes in addition to interaction radius (`agent1_radius + agent2_radius + interaction_radius`), and one of the sizes involved in this calculation is the size of the neighboring agent which we are currently trying to find, then it's obvious that this cannot work.
 
-The only alternative would be to pessimistically say that all agents have the same size, and that would be the size of the largest agent. This brings us back ot the point agent territory, but now we might have a large number of small agents whose supposed neighbors are actually way too far away to be real neighbors, and this makes the whole structure inefficient.
+The only solution would be to pessimistically say that all agents have the same size, and that would be the size of the largest agent (`2 * largest_agent_radius + interaction_radius`). This again reduces the problem to the same simple situation we have with point agents, but now we might have a large number of small agents whose supposed neighbors are actually too far away to be real neighbors, and this makes the whole structure inefficient:
 
 ![nonpoint4](/nonpoint4.png)
 
-Alternatively, we could reference an agent from multiple cells, and there we get a different problem. If an agent can belong to multiple cells, and we find agents' neighbors by going hrough cells and looking at their neighboring cells, then we're going to come across same pairs of agents multiple times, which then requires a whole mechanism to mark a pair of agents as already interacted, which again makes the structure inefficient.
+Alternatively, instead of each agent belongingto one cell, we could reference an agent from multiple cells (all cells that the agent intersects) which creates a different problem. If an agent can be referenced from multiple cells, and we find agents' neighbors by going through neighboring cells, we're going to come across same pairs of agents multiple times. This then requires a marking each pair of interacting agents so we can skip the same pair next time we encounter them. This can also make the structure inefficient.
 
 ## Solution
 
-Trees. Trees are basically hierarchical space partitions, which means there's always a single tree node that encompasses the entire space with all agents in it, and there's also all the branch nodes of varying sizes in between that might be able to accomodate agents of appropriate sizes. So basically trees can store agents in branch nodes, as well as in leaf nodes. Then neighbor searching should not just consider leaf nodes but also check out all branch nodes along the way to finding neighboring leaf nodes.
+Trees. Trees are basically hierarchical space partitions, which means there's always a root tree node that encompasses all agents, and there are branch nodes of varying sizes that might be able to accomodate agents of corresponding sizes. In short, trees can store agents in branch nodes as well as in leaf nodes, and neighbor searching just has to take branch nodes into account (branch nodes are traversed anyway when looking for neighboring leaf nodes, so this is a natural extension).
 
-Currently I have only two tree structures implemented, a k-d tree (`CpuTree`) and an AABB tree (`CpuAabbTree`), and regarding storing non-point agents in their branches they differ in ther effectiveness. A k-d tree always splits a parent partition in half along the chosen axis, but that means that even small non-point agents can get intersected by that splitting plane, and just because of their position have to be stored in a much larger branch node partition. On the other hand AABB trees get built bottom up, its nodes always adapting ot the shape and relative positions of agents, and this keeps agents stored in appropriately sized tree node partitions, which then reflects on the run-times.
+Currently in [Tay](https://github.com/bcace/tay) I have only two tree structures implemented, a k-d tree (`CpuTree`) and an AABB tree (`CpuAabbTree`). My k-d tree always splits a parent partition in half along the selected axis, which means that sometimes even small non-point agents can get intersected by the splitting plane, causing those small agents to be stored in much larger branch node partitions (which in turn means that those agents get many more neighbors than they should). On the other hand AABB trees get built bottom up, with nodes always adapting to the shape and relative positions of agents. This keeps agents stored in appropriately sized tree node partitions, which then also reflects on the run-times.
 
-I didn't even try to use grids for non-point agents, but if the trick is in the partitions hierarchy (as trees show) then I guess one reasonable way to do it would be to have a hierarchy of grids, each partitioning the same space, but with different sized cells. And then those grids can interact easily.
+> I didn't try to use grids for non-point agents, but if the trick is in the hierarchy of differently-sized partitions (as trees show) then I guess one reasonable way to do it would be to have a hierarchy of grids. Each grid partitioning the same space with different sized cells, and being able to search for neighboring cells in other grids.
 
 ## Tests
 
-- model description
+For the test I created a model containing 10000 non-point agents whose sizes are defined by an exponential distribution (exponent 10) between 10 and 100.
+
+(standard space table)
+
+
 - which structures were used
     - simple
     - K-d tree
