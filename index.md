@@ -1,6 +1,8 @@
 # Branimir Čače
 
-## [Comparison of space partitioning structures in agent-based simulations](tay.md)
+## [(Tay 2) Non-point agents in space partitioning structures](tay2.md)
+
+## [(Tay 1) Comparison of space partitioning structures in agent-based simulations](tay.md)
 
 ## [Exploring parallelism in agent-based simulations](ochre.md)
 
