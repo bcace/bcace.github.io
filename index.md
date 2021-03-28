@@ -1,10 +1,12 @@
-# Branimir Čače
+# bcace
+
+Branimir Čače's site for personal projects and related posts.
 
 ## Posts
 
-### [Non-point agents in space partitioning structures (Tay 2)](tay2.md)
+### [Tay: Non-point agents in space partitioning structures](tay2.md)
 
-### [Comparison of space partitioning structures in agent-based simulations (Tay 1)](tay.md)
+### [Tay: Comparison of space partitioning structures in agent-based simulations](tay.md)
 
 ### [Exploring parallelism in agent-based simulations](ochre.md)
 
