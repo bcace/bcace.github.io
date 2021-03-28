@@ -1,87 +1,32 @@
-## Comparison of space partitioning structures in agent-based simulations
+# Tay: comparison of space partitioning structures in agent-based simulations
 
-A number of years ago I was working on [Ochre](https://github.com/bcace/ochre) - agent-based modeling and simulation tool. At the time I focused mostly on achieving immediate connection between modifying the model and running the simulation. Additionally, I wanted to create a language in which non-programmers could safely write parallel agent interaction code without fear of data races or race conditions. While simulation performance was solid, at a certain scale it would slow down enough to break the immediacy of model development, and it was obvious that there isn't a single most efficient simulation mechanism for all the different models that users might want to develop.
+A number of years ago I was working on [Ochre](https://github.com/bcace/ochre), an agent-based modeling and simulation tool. At the time I focused mostly on creating an immediate connection between modifying the model and seeing the response in the running simulation, and I also wanted to create a language in which non-programmers could safely write parallel agent interaction code without fear of data races or race conditions. While the simulation speed was acceptable for smaller models of a few hundred to a few thousand agents, at a larger scale it would become slow enough to break the immediacy of the modeling-simulation cycle.
 
-A common cause of slowdowns in agent-based simulations is the number of interactions that can occur between agents. If the decision whether agents should interact is made based on their proximity ([flocking](https://en.wikipedia.org/wiki/Flocking_(behavior)) is a good example) then there is potential for optimization by using [space partitioning structures](https://en.wikipedia.org/wiki/Space_partitioning). These structures provide rough information on which agents are so far apart that they have no chance of interacting (**broad phase**), and which agents *might* interact. Each of the remaining pairs of agents that might interact we have to test for distance explicitly (**narrow phase**).
+Recently I decided to approach the problem from the other side and try to make simulations run efficiently first, before attempting to improve the modeling experience. Because agent-based models are so varied, there's no single best mechanism that will run all possible simulations equally well, so to be able test and compare various data structures in different scenarios and model configurations, I started the [Tay](https://github.com/bcace/tay) project. This post is the first one in a series where I will be writing about major new features and showing benchmark results.
 
-> Example for space partitioning: if there's a 1000 agents in a model and they all have to interact, that's 999000 interactions at each step. If we now want to limit agents to only interact if they're close enough to each other, and let's say that for a given interaction range agents on average come close enough to 10 other agents at each step, that's 10000 actual interactions. But in order to test whether agents should interact at all we still had to go through all 999000 pairs, which means we just wasted time on 989000 tests.
+## Space partitioning
 
-To evaluate a simulation system setup and compare space partitioning structures it's not enough to just look at resulting simulation run-times, since they include various influences such as the hardware we're running simulations on, or how performant the agent behavior code is. To isolate the performance of the system itself we can look at the following numbers:
+Other than *accidental* causes of simulation slowdown (like running the simulation on an interpreter, which I did with Ochre, and won't do again), the main *essential* part of the slowdown is the number of agent interactions that have to be executed. Since agent interactions are local in most agent-based models (N<sub>interactions</sub> << N<sub>agents</sub><sup>2</sup>)) there's a lot that can be done to improve simulation speed by finding agent neighbors efficiently.
 
-* number of agent pairs that pass the broad phase and get rejected in the narrow phase,
-* time required to update and use the structure to find neighbors,
-* how well the workload is distributed among threads.
+Finding agent neighbors is done by dividing the space into smaller partitions, and then efficiently finding neighboring partitions. Normally when agents have to interact we choose a partition and look for its neighboring partitions. We then claim that agents contained in the neighboring partitions are *all* neighbors of *all* agents in the first partition.
 
-## Tay library
+This is obviously just a rough estimation (broad phase) that has a lot of false positives, and requires that we additionally test the distance between agents explicitly (narrow phase).
 
-I wrote [Tay](https://github.com/bcace/tay) as a collection of space partitioning structures to explore how they perform in different conditions. The goal is to have multiple different test models and run simulations with different structures, on different numbers of threads and both on CPU and GPU, and compare run-times. Since agent properties, behavior and distribution in space can change during a single simulation run so much that it completely changes which structure is optimal, Tay allows switching between structures during a simulation run (even switching between CPU and GPU), changing the number of threads (on CPU) and adjusting any parameters each structure might have. Since conclusions derived from these experiments should be applicable to a wide variety of agent-based models, the following requirements should be met:
+> Example for space partitioning: if there's a 1000 agents in a model and they all have to interact, that's 999000 interactions at each step. If interactions between agents are supposed to be local, and let's say that for a given interaction range agents on average come close enough to 10 other agents at each step, that's 10000 actual interactions. But in order to test whether agents should interact at all we still had to go through all 999000 pairs, which means we just wasted time on 989000 tests.
 
-**Space dimensions:** Currently space can have 1, 2, 3 or 4 dimensions, and those dimensions can be of any type, not just spatial. The fact that dimensions don't have to be of the same type means that space partitioning structures treat each dimension separately. For example, when defining an interaction between agents we cannot just define one range value to which the interaction is limited, we have to specify a separate value for each dimension.
+Regarding partition sizes, if we partition the space too little we get too many agents to reject during the narrow phase, and if we partition too much we get more partitions to build, traverse and test for closeness; and this optimum point is clearly seen in the test results when we vary partition sizes.
 
-**Agent size:** Agents can have size in any dimension (don't have to be points). This can complicate space partitioning structures somewhat. If it's a tree structure there's a possibility to add agents to non-leaf nodes. If it's a grid structure then the same agent can be added to multiple partitions in which case we have to prevent multiple interactions between same agents, or we can build a "fake" tree from multiple grids of varying partition sizes.
+## Evaluating space partitioning structures
 
-**Space bounds:** Space doesn't have fixed bounds, agents are free to move anywhere, and it's up to the space partitioning structure to update itself correctly.
+One way to evaluate a space partitioning structure would be to simply compare it to others on the same model, but that doesn't guarantee that the structure is implemented optimally. To isolate the performance of a structure we can look at the following numbers:
 
-**Agent types:** Multiple agent types can be defined. This allows having agents with drastically different behaviors in a single model.
+* Number of agent pairs that pass the broad phase and get rejected in the narrow phase
+* Time required to update and use the structure to find neighbors
+* How well the workload is distributed among threads
 
-**Behaviors and interactions:** To avoid data races and race conditions agent behavior code is split into an arbitrary number of *passes*. There are currently only two types of passes: **act** and **see**.
+## First results
 
-**act** pass describes what each agent does with its own data, there is no communication with other agents. This pass is defined for a specific agent type and specifies a procedure that is applied to all "live" agents of that type.
-
-**see** pass describes how two agents interact, the **seer** agent and the **seen** agent. This strict role assignment for these two agents is what enables lock-free parallelism: knowing that the **seer** agent can change its state and the **seen** agent is read-only enables scheduling **see** code execution so that a **seer** agent is never in more than one thread during this pass. **see** pass is defined for two agent groups: **seer** agent type and **seen** agent type, and specifies a procedure that is applied to all agent pairs the space partitioning structure decides should interact.
-
-**Communication methods:** Communication methods can be combined: communicating with neighbors within specified range(s), through direct references, connection objects or a [grid](https://en.wikipedia.org/wiki/Particle_Mesh). Currently agents only interact with neighbors, but I took special care to not preclude any of the other mechanisms from being added.
-
-**Adding/removing agents:** Agents can be removed from or added to a running simulation. This requires certain provisions in the space partitioning structures, depending on the model itself and the chosen method for efficiently iterating through agents. The options are roughly:
-
-1. **Connecting agents into linked lists** requires embedding `next` pointers into agents themselves, and the same pointers can be used to group agents into partitions.
-2. **Marking "dead" agents** and skipping them, with an occasional "defragmentation" step. The "defragmentation" step where agents would be moved in memory would require that all references to agents from connection objects or other agents are updated as well. This makes this option either more complicated (and potentially lose any performance gains over option 1.) or limited only to use in models where there are no agent references.
-
-## Space partitioning structures
-
-Generally if we partition the space too little we get too many agents to reject during the narrow phase (distance test), and if we partition too much we get more partitions to build, traverse and test for closeness; and this optimum can be clearly seen in the test results, when we vary the partition depth.
-
-For this reason there are two parameters that can be adjusted for all partitioning structures. First is a set of sizes, one for each dimension, that represent the suggested smallest partition size for each dimension. They are only "suggested" because we can have multiple interactions (**see** passes) in a model, each with its own interaction radii, and the smallest partition sizes should be related to those interaction radii. The other is a parameter called `depth_correction` that can then be varied to adjust the smallest partition sizes: `size = suggested_size / 2^depth_correction`.
-
-> Note that because we can have multiple interactions with drastically different interaction radii, we cannot just consider a partition's immediate neighboring partitions to find all agents that are within interaction range. Generally, as mentioned above, interaction radii are used just as an initial, approximate value for a good partition size.
-
-Currently all partitioning structures are completely rebuilt at the start of each step since profiling shows that it takes very little time compared to actual agent interactions.
-
-> GPU structures have an additional difficulty of having to copy data between CPU and GPU and fix any pointers used on both sides (calculating relative addresses and then adding them to the appropriate new base addresses). These data transfers are reduced to essential data needed to continue the simulation run, which is reflected in different scenarios when switching between different structures. For example, when switching from a CPU structure to a GPU structure we have to push the entire simulation state to GPU, but when switching from `GpuSimple` to `GpuTree` only the tree structure data has to be copied and pointer addresses have to be fixed.
-
-### Simple
-
-`CpuSimple` is a "non-structure" structure used either when *all* agents have to interact, or when we need a reference simulation run to measure the effectiveness of other, more elaborate structures. It distributes agents evenly between threads and performs only the narrow phase when deciding which agents should interact.
-
-`GpuSimple` structure works similarly on GPU, only copying data to and from GPU when absolutely necessary. Because of large difference in speed it has the `direct` option that switches iteration through **seen** agents on each thread from using linked list pointers to assuming that all agents are consecutive in a single array. This option can be used when number of agents in a simulation doesn't change.
-
-### Tree
-
-`CpuTree` structure is a k-d tree. Can store agents that have size (are not points) in non-leaf nodes.
-
-**Tree update:** At the start of each simulation step tree is cleared so that it only contains the root partition, and the root partition's bounding box is updated to enclose all agents. When adding an agent to the tree the the appropriate branch is traversed as far as possible and when further partitioning is needed partitions are split in half along a dimension with largest ratio between partition size in that dimension and smallest partition size in the same dimension.
-
-**Act phase:** All tree partitions are evenly distributed among threads for processing.
-
-**See phase:** All tree partitions are evenly distributed among threads as **seer** partitions, or partitions containing **seer** agents. To get **seen** agents for each of those **seer** partitions, the tree is traversed and each of those partitions' bounding boxes is tested for overlap with the **seer** partition's bounding box inflated by the **see** pass radii. Since no two threads ever have the same **seer** partition there is no danger of writing to the same memory location from multiple threads. All threads process the same partitions for **seen** agents, but **seen** agents are read-only.
-
-### Grid
-
-`CpuGrid` structure is a hash grid. Hash function used to map grid cell indices to bin indices is a simple XOR hash function.
-
-**Grid update:** Space bounding box and suggested partition sizes are used to convert each agent's position into grid cell indices, which are then hashed to find the appropriate bin for each agent. All non-empty bins are linked into a list for faster access.
-
-**Act phase:** Each thread iterates through its assigned bins so that each bin's agents get processed by one of the threads.
-
-**See phase:** Each thread iterates through its set of **seer** bins and finds neighboring **seen** bins through its **seer** agents' positions. Because of hash collisions a single bin can contain agents from multiple grid cells, so in principle we have to find neighboring bins for each **seer** bin agent, but since most bins contain agents of only one cell the algorithm caches found neighboring bins.
-
-To find neighboring **seen** bins, **seer** agent's cell indices are calculated from its position, then cell sizes and **see** radii are used to build the "kernel" of cells neighboring the **seer** cell, and finally indices of each kernel cell are hashed to find the corresponding bins.
-
-Hash collisions also have to be taken into account when looking at kernel **seen** bins. One problem is that kernel **seen** bins can also contain agents from multiple cells, and some of those cells obviously might be outside the kernel. Simplest solution is to ignore the problem and just let those agents get rejected during the narrow phase (then it becomes a problem of reducing the number of collisions, which we have to do anyway). The other problem is that a hash collision could cause the same bin to appear multiple times in the same kernel. The fix for that is to mark bins as already visited and skip them on subsequent encounters.
-
-## Results
-
-So finally we come to the point of the project - comparison of space partitioning structures. Here I run a series of simulations where I apply each structure to a test model (and its variants), and then tweak the structure to see if there's a setting where it performs better than others for the given model.
+So finally we come to the comparison of space partitioning structures. Here I run a series of simulations where I apply each structure to a test model (and its variants), and then tweak the structure to see if there's a setting where it performs better than others for the given model.
 
 Since focus is on optimizing spatial agent interactions the model I used is a very abstracted version of flocking. To make agent spatial distribution consistent during simulation runs (and therefore number of interactions), agent movement is predefined (it doesn't depend on agent interactions). To verify that the simulation is running correctly there is a separate `f_buffer` variable that gets updated at each step by the agent's interactions with other agents. I compare values of `f_buffer` variables between simulation runs to make sure that all simulations of the same model run exactly the same, regardless of any differences between how those simulation were run, on which hardware they were run, and which structures were used.
 
@@ -149,23 +94,3 @@ Third number, or thread unbalancing, tells us how well the interaction work is d
 For the uniform distribution (green) thread unbalancing is small and dropping off because many small cells with few agents each are easier to distribute evenly among threads than few large cells with many agents each. For the one-clump distribution (blue) the same effect is visible at larger depth corrections, but at smaller depth corrections and large interaction radii all partitions have the clump of agents as their neighbor. This means the amount of work will be the same for all of them, which makes the balancing easy:
 
 ![plot10](/plot10.png)
-
-## Application
-
-In addition to the benchmarks, you can see Tay in action [here](https://www.youtube.com/watch?v=DD93xIQqz5s). The video shows a simple flocking simulation with 30000 boids, running at around 30 ms per simulation step on the same configuration as the benchmarks, using the `CpuGrid` structure. I'm hoping to add things like terrain and other, non-point moving agents that would require multiple different structures to be used and updated at different rates, all working together for an efficient simulation.
-
-Of course, this is not the fastest a flocking simulation can run, the same could be run faster on GPU, and/or instead of interacting directly agents could interact through a particle grid (faster but less accurate). Then there's a few tricks that could be done such as boids communicating only through connections, which is fast, and only updating those connections after a certain number of steps using a regular structure to find new neighbors to connect to. I will work to eventually add all those mechanisms to Tay, but for now this is a good showcase of what can be done with a relatively simple space partitioning structure.
-
-## What's next
-
-Currently I use Tay as a vehicle to better understand what's necessary and what's possible for efficient agent-based simulation. In future, through its application in more complex an demanding simulations, I would like to develop it into a library that could be used for any simulation and, more importantly, easily configured for optimal simulation running. These are some of the more significant things to do in that direction:
-
-* Automatic adjustment of `depth_correction`.
-* Support for non-point agents in the `CpuTree` structure.
-* Combining multiple structures in a single simulation.
-* More control over when structures get updated.
-* Efficient communication through references or connections.
-* Efficient communication through particle grids.
-* Implement and benchmark the new `CpuAABBTree` structure.
-* Implement thread balancing for the `CpuTree` structure.
-* Add a simple sampling profiler to measure time spent updating and using structures.
