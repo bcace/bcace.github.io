@@ -26,9 +26,11 @@ One way to evaluate a space partitioning structure would be to simply compare it
 
 ## First results
 
-So finally we come to the comparison of space partitioning structures. Here I run a series of simulations where I apply each structure to a test model (and its variants), and then tweak the structure to see if there's a setting where it performs better than others for the given model.
+To compare structures I run a series of simulations where I apply each structure to a test model and its variants, and then tweak the structure to see if there's a setting where it performs better than others for the given model.
 
-Since focus is on optimizing spatial agent interactions the model I used is a very abstracted version of flocking. To make agent spatial distribution consistent during simulation runs (and therefore number of interactions), agent movement is predefined (it doesn't depend on agent interactions). To verify that the simulation is running correctly there is a separate `f_buffer` variable that gets updated at each step by the agent's interactions with other agents. I compare values of `f_buffer` variables between simulation runs to make sure that all simulations of the same model run exactly the same, regardless of any differences between how those simulation were run, on which hardware they were run, and which structures were used.
+Since focus is on optimizing spatial agent interactions the model I used is a very abstracted version of flocking. To make agent spatial distribution consistent during simulation runs (and therefore number of interactions), agent movement is predefined (it doesn't depend on agent interactions).
+
+To verify that the simulation is running correctly there is a separate agent variable which accumulates results of interactions with other agents. This value is compared with the same value from a previous simulation run where the model was the same, but a different structure was used. Some small differences are always present because of floating point errors, but this is a kind of interaction result that quickly and drastically diverges if there are any race conditions or errors in neighbor-finding.
 
 Variables in these experiments can be grouped into model variables and system variables. Model variables are the number of agents in the model, agent distribution in space (density and "clumpiness"), interaction radii, and how demanding the interaction code is. System variables are the number of threads the simulation is running on, the space partitioning structure used (including whether it's a CPU or a GPU structure), `depth_correction` (where applicable), and any structure-specific settings like `GpuSimple` structure's `direct` setting or hash table size dictated by the available memory for the `CpuGrid` structure.
 
@@ -43,7 +45,7 @@ Most results are for uniform distribution of agents moving in random directions 
 **Space size**|1000 * 1000 * 1000
 **Threads (CPU)**|8
 
-Simulation workload is best measured in number of interactions each agent has during a simulation step, and for the same number of agents, distribution and space size it depends only on the interaction radii. Obviously these numbers are exactly the same regardless of structure used:
+Simulation workload is best measured in number of interactions each agent has during a simulation step, and for the same number of agents, distribution and space size it depends only on the interaction radii. Obviously these numbers are exactly the same regardless of the structure used:
 
 **50**|9.2973
 **100**|68.6986
@@ -67,7 +69,7 @@ Comparing `CpuTree` and `CpuGrid` we can see that grids perform better for all t
 
 ![plot4](/plot4.png)
 
-Simulations with uniform (green) perform better than one-clump (blue) distributions because agents in the "clump" are all so close together that they must always interact:
+Simulations with uniform distribution (green) perform better than one-clump distribution (blue) because agents in the "clump" are all so close together that they must always interact:
 
 ![plot9](/plot9.png)
 
