@@ -1,6 +1,6 @@
-# bcace
+# Branimir Čače
 
-Branimir Čače's site for personal projects and related posts.
+My site for personal projects and related posts.
 
 ## Posts
 
