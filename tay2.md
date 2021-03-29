@@ -1,4 +1,4 @@
-# Non-point agents in space partitioning structures (Tay 2)
+# Non-point agents in space partitioning structures
 
 When developing neighbor-finding data structures there's a significant difference in how point and non-point agents can be handled. Here point agents have no size in any dimension of space, just a location. Non-point agents cover a section of space, i.e. have a non-zero size in at least one of dimensions of space.
 
@@ -36,13 +36,30 @@ Currently in [Tay](https://github.com/bcace/tay) I have only two tree structures
 
 ## Tests
 
-For the test I created a model containing 10000 non-point agents whose sizes are defined by an exponential distribution (exponent 10) between 10 and 100.
+To test structures with non-point agents I created agents with sizes varying between 1 and 50.
 
-(standard space table)
+**Agents**|10000
+**Steps**|1000
+**Space size**|1000 * 1000 * 1000
+**Threads (CPU)**|8
 
+I also tested with interaction radii 50 and 100, and these are average numbers of interactions each agent has during each simulation step:
 
-- which structures were used
-    - simple
-    - K-d tree
-    - AABB tree
-- results
+**50**|47.3536
+**100**|175.818
+
+First, we can see how much better tree structures (`CpuTree` and `CpuAabbTree`) perform than brute-force simulation (`CpuSimple`):
+
+![nonpoint_plot_1](/nonpoint_plot_1.png)
+
+Comparing just the tree structures at interaction radius 50:
+
+![nonpoint_plot_2](/nonpoint_plot_2.png)
+
+and the same with interaction radius at 100:
+
+![nonpoint_plot_3](/nonpoint_plot_3.png)
+
+we can see how much faster the AABB tree is because it doesn't have the problem of storing awkwardly positioned agents into "wrong" partitions like the k-d tree. The consequences of AABB tree adapting all its nodes to their contents can be clearly seen in this neighbor-finding efficiency plot:
+
+![nonpoint_plot_4](/nonpoint_plot_4.png)
