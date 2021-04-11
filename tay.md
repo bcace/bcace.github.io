@@ -1,4 +1,4 @@
-# Tay: comparison of space partitioning structures in agent-based simulations
+# Comparison of space partitioning structures in agent-based simulations
 
 A number of years ago I was working on [Ochre](https://github.com/bcace/ochre), an agent-based modeling and simulation tool. At the time I focused mainly on creating immediate connection between modifying the model and observing the response of the running simulation, and I also wanted to create a language in which non-programmers could safely write parallel agent interaction code without fear of data races or race conditions. While the simulation speed was acceptable for smaller models of a few hundred to a few thousand agents, at a larger scale it would become slow enough to break the immediacy of the modeling-simulation cycle.
 
@@ -32,7 +32,7 @@ Since focus is on optimizing spatial agent interactions the model I used is a ve
 
 To verify that the simulation is running correctly there is a separate agent variable which accumulates results of interactions with other agents. This value is compared with the same value from a previous simulation run where the model was the same, but a different structure was used. Some small differences are always present because of floating point errors, but this is a kind of interaction result that quickly and drastically diverges if there are any race conditions or errors in neighbor-finding.
 
-Variables in these experiments can be grouped into model variables and system variables. Model variables can be the number of agents in the model, agent distribution in space (density and "clumpiness"), interaction radii, and how demanding the interaction code is. System variables are the number of threads the simulation is running on, the space partitioning structure used (including whether it's a CPU or a GPU structure), `depth_correction` (where applicable), and any structure-specific settings like `GpuSimple` structure's `direct` setting or hash table size dictated by the available memory for the `CpuGrid` structure.
+Variables in these experiments can be grouped into model variables and system variables. Model variables can be the number of agents in the model, agent distribution in space (density and "clumpiness"), interaction radii, and how demanding the interaction code is. System variables are the number of threads the simulation is running on, the space partitioning structure used (including whether it's a CPU or a GPU structure), `depth_correction` (where applicable), and any structure-specific settings like `GpuSimple` structure's `direct` setting or hash table size dictated by the available memory for the `CpuHashGrid` structure.
 
 So far I only had the chance to run simulations on my ThinkPad T480 with the i5-8250U processor (4 physical and 8 logical processors, base frequency 1.6 Ghz, max. frequency 3.4 GHz (Turbo Boost)) and UHD Graphics 620 (I used Intel's OpenCL SDK for GPU simulations). GPU results are just there to verify that the system works correctly, with consistent simulation results, even when switching between CPU and GPU strucures during simulation runs.
 
@@ -53,7 +53,7 @@ Simulation workload is best measured in number of interactions each agent has du
 
 #### Simulation run-times
 
-First, to show the benefits of using partitioning structures, here's a comparison of simulation run-times of the brute-force approach (`CpuSimple`) and partitioning structures (`CpuGrid`) for the case when interaction radius is 50:
+First, to show the benefits of using partitioning structures, here's a comparison of simulation run-times of the brute-force approach (`CpuSimple`) and partitioning structures (`CpuHashGrid`) for the case when interaction radius is 50:
 
 ![plot1](/plot1.png)
 
@@ -65,7 +65,7 @@ Next, if we look at just one of the space partitioning structures (`CpuTree`) fo
 
 ![plot3](/plot3.png)
 
-Comparing `CpuTree` and `CpuGrid` we can see that grids perform better for all three interaction radii:
+Comparing `CpuTree` and `CpuHashGrid` we can see that grids perform better for all three interaction radii:
 
 ![plot4](/plot4.png)
 
@@ -73,7 +73,7 @@ Simulations with uniform distribution (green) perform better than one-clump dist
 
 ![plot9](/plot9.png)
 
-Finally, when comparing GPU brute-force approach (`GpuSimple`) and a CPU space partitioning structure (`CpuGrid`) we can see that for smaller interaction radii CPU version is still faster:
+Finally, when comparing GPU brute-force approach (`GpuSimple`) and a CPU space partitioning structure (`CpuHashGrid`) we can see that for smaller interaction radii CPU version is still faster:
 
 ![plot5](/plot5.png)
 
@@ -96,3 +96,16 @@ Third number, or thread unbalancing, tells us how well the interaction work is d
 For the uniform distribution (green) thread unbalancing is small and dropping off because many small cells with few agents each are easier to distribute evenly among threads than few large cells with many agents each. For the one-clump distribution (blue) the same effect is visible at larger depth corrections, but at smaller depth corrections and large interaction radii all partitions have the clump of agents as their neighbor. This means the amount of work will be the same for all of them, which makes the balancing easy:
 
 ![plot10](/plot10.png)
+
+## What's next
+
+All these structures I tested are nothing new, and their usefulness is well known, but with Tay I want to get a decent impression of *how* good they all are, and what are their advantages and disadvantages. And in addition to just developing the intuition for these structures I would like to create a solid codebase which will enable me to develop simulations quickly. At the same time I would like to have some confidence in that codebase - that it really achieves the same performance as a custom, non-naive and optimized implementation.
+
+There's obviously plenty to do to make Tay truly flexible, and I will be tackling new features one by one and documenting the progress in future posts:
+
+- New GPU structures
+- New structures for non-point agents
+- Combining different structures in the same simulation
+- Support for particle mesh communication between agents
+- Measuring time spent on maintaining/using structures to automatically adjust partition sizes
+- Support for creating and destroying agents
