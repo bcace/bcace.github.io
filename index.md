@@ -1,6 +1,6 @@
 # Branimir Čače
 
-My site for personal projects and related posts.
+Site for my personal projects and related posts.
 
 ## Posts
 

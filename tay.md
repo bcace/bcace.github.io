@@ -99,7 +99,7 @@ For the uniform distribution (green) thread unbalancing is small and dropping of
 
 ## What's next
 
-All these structures I tested are nothing new, and their usefulness is well known, but with Tay I want to get a decent impression of *how* good they all are, and what are their advantages and disadvantages. And in addition to just developing the intuition for these structures I would like to create a solid codebase which will enable me to develop simulations quickly. At the same time I would like to have some confidence in that codebase - that it really achieves the same performance as a custom, non-naive and optimized implementation.
+All structures tested here are nothing new, and their usefulness is well known, but with Tay I want to get a decent impression of *how* good they all are, and what are their advantages and disadvantages. And in addition to just developing the intuition for these structures I would like to create a solid codebase which will enable me to develop simulations quickly. At the same time I would like to have some confidence in that codebase - that it really achieves the same performance as a custom, non-naive and optimized implementation.
 
 There's obviously plenty to do to make Tay truly flexible, and I will be tackling new features one by one and documenting the progress in future posts:
 
