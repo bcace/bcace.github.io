@@ -32,7 +32,7 @@ Alternatively, instead of each agent belongingto one cell, we could reference an
 
 Trees. Trees are basically hierarchical space partitions, which means there's always a root tree node that encompasses all agents, and there are branch nodes of varying sizes that might be able to accomodate agents of corresponding sizes. In short, trees can store agents in branch nodes as well as in leaf nodes, and neighbor searching just has to take branch nodes into account (branch nodes are traversed anyway when looking for neighboring leaf nodes, so this is a natural extension).
 
-Currently in [Tay](https://github.com/bcace/tay) I have two tree structures implemented, a k-d tree (`CpuKdTree`) and an AABB tree (`CpuAabbTree`). My k-d tree always splits parent partitions in half along the selected axis, which means that sometimes even small non-point agents can get intersected by the splitting plane, causing those small agents to be stored in much larger branch node partitions (which in turn means that those agents get many more neighbors than they should). On the other hand AABB trees get built bottom up, with nodes always adapting to the shape and relative positions of agents. This keeps agents stored in appropriately sized tree node partitions, which then also reflects on speed.
+Currently in [Tay](https://github.com/bcace/tay) I have two tree structures implemented, a k-d tree (`CpuTree`) and an AABB tree (`CpuAabbTree`). My k-d tree always splits parent partitions in half along the selected axis, which means that sometimes even small non-point agents can get intersected by the splitting plane, causing those small agents to be stored in much larger branch node partitions (which in turn means that those agents get many more neighbors than they should). On the other hand AABB trees get built bottom up, with nodes always adapting to the shape and relative positions of agents. This keeps agents stored in appropriately sized tree node partitions, which then also reflects on speed.
 
 > I didn't try to use grids for non-point agents, but if the trick is in the hierarchy of differently-sized partitions (as trees show) then I guess one reasonable way to do it would be to have a hierarchy of grids. Each grid partitioning the same space with different sized cells, and being able to search for neighboring cells in other grids.
 
@@ -50,7 +50,7 @@ I also tested with interaction radii 50 and 100, and these are average numbers o
 **50**|47.3536
 **100**|175.818
 
-First, we can see how much better tree structures (`CpuKdTree` and `CpuAabbTree`) perform than brute-force simulation (`CpuSimple`):
+First, we can see how much better tree structures (`CpuTree` and `CpuAabbTree`) perform than brute-force simulation (`CpuSimple`):
 
 ![nonpoint_plot_1](/nonpoint_plot_1.png)
 
