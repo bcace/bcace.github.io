@@ -7,12 +7,18 @@ plt.style.use('seaborn-whitegrid')
 def _format_and_label(label, radius, all_lines):
     if label == 'CpuSimple':
         color = '#444444'
-    elif label == 'CpuTree':
-        color = '#00aa00'
+    elif label == 'CpuKdTree':
+        color = '#008800'
+    elif label == 'CpuKdTree (old)':
+        color = '#44dd44'
     elif label == 'CpuAabbTree':
         color = '#0022ff'
+    elif label == 'CpuAabbTree (old)':
+        color = '#44aaff'
     elif label == 'CpuGrid':
-        color = '#55ff22'
+        color = '#0022ff'
+    elif label == 'CpuGrid (old)':
+        color = '#44aaff'
     elif label == 'GpuSimple (direct)':
         color = '#ff9933'
     else:
@@ -65,18 +71,31 @@ def _plot(in_filename, out_filename, y_var, see_radii, in_structs, ylim=None):
 
     plt.legend(bbox_to_anchor=(1, 1), loc="upper left");
     plt.tight_layout()
-    # plt.show()
+    plt.show()
     fig.savefig('%s.png' % out_filename)
 
 
-_plot("C:/Users/branimir/dev/tay/benchmark/test_nonpoint_telemetry.py", "nonpoint_plot_1",
-      "ms per step", [50], ['CpuSimple', 'CpuTree', 'CpuAabbTree'])
+# _plot("C:/Users/branimir/dev/tay/benchmark/test_nonpoint_telemetry.py", "nonpoint_plot_1",
+#       "ms per step", [50], ['CpuSimple', 'CpuTree', 'CpuAabbTree'])
 
-_plot("C:/Users/branimir/dev/tay/benchmark/test_nonpoint_telemetry.py", "nonpoint_plot_2",
-      "ms per step", [50], ['CpuTree', 'CpuAabbTree'])
+# _plot("C:/Users/branimir/dev/tay/benchmark/test_nonpoint_telemetry.py", "nonpoint_plot_2",
+#       "ms per step", [50], ['CpuTree', 'CpuAabbTree'])
 
-_plot("C:/Users/branimir/dev/tay/benchmark/test_nonpoint_telemetry.py", "nonpoint_plot_3",
-      "ms per step", [100], ['CpuTree', 'CpuAabbTree'])
+# _plot("C:/Users/branimir/dev/tay/benchmark/test_nonpoint_telemetry.py", "nonpoint_plot_3",
+#       "ms per step", [100], ['CpuTree', 'CpuAabbTree'])
 
-_plot("C:/Users/branimir/dev/tay/benchmark/test_nonpoint_telemetry.py", "nonpoint_plot_4",
-      "neighbor-finding efficiency (%)", [50], ['CpuTree', 'CpuAabbTree'])
+# _plot("C:/Users/branimir/dev/tay/benchmark/test_nonpoint_telemetry.py", "nonpoint_plot_4",
+#       "neighbor-finding efficiency (%)", [50], ['CpuTree', 'CpuAabbTree'])
+
+
+_plot("C:/Users/User/dev/tay/benchmark/test_basic_runtimes_cached.py", "cached_plot_1",
+      "ms per step", [50], ['CpuKdTree (old)', 'CpuKdTree'])
+
+_plot("C:/Users/User/dev/tay/benchmark/test_basic_runtimes_cached.py", "cached_plot_2",
+      "ms per step", [50], ['CpuGrid (old)', 'CpuGrid'])
+
+_plot("C:/Users/User/dev/tay/benchmark/test_nonpoint_runtimes_cached.py", "cached_nonpoint_plot_1",
+      "ms per step", [50], ['CpuKdTree (old)', 'CpuKdTree'])
+
+_plot("C:/Users/User/dev/tay/benchmark/test_nonpoint_runtimes_cached.py", "cached_nonpoint_plot_2",
+      "ms per step", [50], ['CpuAabbTree (old)', 'CpuAabbTree'])

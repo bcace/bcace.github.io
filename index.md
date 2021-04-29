@@ -4,6 +4,8 @@ Site for my personal projects and related posts.
 
 ## Posts
 
+### [Tay: Cache-friendly space partitioning structures](tay3.md)
+
 ### [Tay: Non-point agents in space partitioning structures](tay2.md)
 
 ### [Tay: Comparison of space partitioning structures in agent-based simulations](tay.md)
